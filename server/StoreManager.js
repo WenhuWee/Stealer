@@ -3,6 +3,7 @@ import { funcCheck, safeJSONParse } from '../utils/misc.js';
 
 const Path = require('path');
 const FS = require('fs');
+const Nedb = require('nedb');
 
 let instance = null;
 

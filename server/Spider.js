@@ -6,7 +6,6 @@ const Https = require('https');
 const Url = require('url');
 const Async = require('async');
 const Cheerio = require('cheerio');
-const Nedb = require('nedb');
 const FS = require('fs');
 const Path = require('path');
 const QS = require('querystring');
@@ -15,6 +14,24 @@ const QS = require('querystring');
 // -----------------------------------
 // ----------------URLManager---------
 // -----------------------------------
+
+class URLTask {
+    url:string;
+    header:string;
+    type:string;
+    content:Object;
+    contentHanlder:Function;
+    error:Object;
+
+    copy() {
+        const task = new URLTask();
+        const keys = Object.keys(this);
+        keys.forEach((key) => {
+            task[key] = this[key];
+        });
+        return task;
+    }
+}
 
 class URLManager {
     constructor() {
@@ -25,10 +42,14 @@ class URLManager {
         this.currentOption = this.initialOption;
 
         this.defaultHeader = {
-
+            'zhuanlan.zhihu.com': {
+                '/': '',
+            },
         };
         this.urlHandler = {
-
+            'zhuanlan.zhihu.com': {
+                '/': this.handleZhihuZhuanlanUrl,
+            },
         };
     }
 
@@ -39,16 +60,46 @@ class URLManager {
             this.currentOption = Object.assign({}, this.initialOption);
         }
 
-        this.crawlerQueue = Async.queue((task, callback) => {
-            this._requestURL(task, (content, err) => {
-                callback(task.url, content, err);
-            });
+        this.crawlerQueue = Async.queue((params, callback) => {
+            const tasks = params.tasks;
+            if (Array.isArray(tasks)) {
+                const funtions = [];
+                const newTasks = [];
+                tasks.forEach((task) => {
+                    funtions.push((funBack) => {
+                        this._requestURL(task, (newTask) => {
+                            newTasks.push(newTask);
+                            funBack(newTask.error, newTask.content);
+                        });
+                    });
+                });
+                Async.parallel(funtions, (err) => {
+                    callback(newTasks, err);
+                });
+            } else {
+                callback(tasks, null);
+            }
+
         }, this.currentOption.asyncNum);
     }
 
     stop() {
         this.crawlerQueue.kill();
         this.crawlerQueue = null;
+    }
+
+    insertURL(url, header, callback) {
+        if (this.crawlerQueue) {
+            let tasks = [];
+            const handler = this._getUrlHandler(url);
+            if (handler) {
+                tasks = handler(url);
+            }
+            this.crawlerQueue.push({
+                tasks,
+                header,
+            }, callback);
+        }
     }
 
     _getUrlHandler(url) {
@@ -68,20 +119,6 @@ class URLManager {
         return handler;
     }
 
-    insertURL(url, header, callback) {
-        if (this.crawlerQueue) {
-            let target = url;
-            const handler = this._getUrlHandler(url);
-            if (handler) {
-                target = handler(url);
-            }
-            this.crawlerQueue.push({
-                url: target,
-                header,
-            }, callback);
-        }
-    }
-
     _getDefaultHeader(host, path) {
         let header = null;
         const hostRule = this.defaultHeader[host];
@@ -94,11 +131,11 @@ class URLManager {
         return header;
     }
 
-    _requestURL(params, callback) {
-        const url = Url.parse(params.url);
+    _requestURL(task, callback) {
+        const url = Url.parse(task.url);
         let headers = this._getDefaultHeader(url.host, url.path) || {};
-        if (params.header) {
-            headers = Object.assign(headers, params.header);
+        if (task.header) {
+            headers = Object.assign(headers, task.header);
         }
 
         let requestObject = Http.request;
@@ -117,6 +154,9 @@ class URLManager {
             },
         };
 
+
+        const newTask = task.copy();
+
         const request = requestObject(options, (res) => {
             const body = [];
             res.on('data', (data) => {
@@ -124,21 +164,48 @@ class URLManager {
             });
             res.on('end', () => {
                 const buffer = Buffer.concat(body);
-                callback(buffer.toString('utf-8'), null);
+                newTask.content = buffer.toString('utf-8');
+                callback(newTask);
             });
         });
         request.end();
 
         request.on('error', (error) => {
-            callback(null, error);
+            newTask.error = error;
+            callback();
         });
+    }
+
+    // zhihu专栏
+    handleZhihuZhuanlanUrl(url) {
+        const tasks = [];
+        if (url) {
+            const urlObject = Url.parse(url);
+            const paths = urlObject.pathname.split('/');
+            const zhuanlanName = paths[1];
+            if (zhuanlanName) {
+                const contentTask = new URLTask();
+                contentTask.url = `https://zhuanlan.zhihu.com/api/columns/${zhuanlanName}/posts?limit=20`;
+                contentTask.type = 'content';
+
+                const authorTask = new URLTask();
+                authorTask.url = `https://zhuanlan.zhihu.com/api/columns/${zhuanlanName}`;
+                authorTask.type = 'author';
+
+                tasks.push(contentTask);
+                tasks.push(authorTask);
+            }
+        }
+        return tasks;
     }
 }
 
 class ContentParser {
     constructor() {
         this.parserDistributor = {
-
+            'zhuanlan.zhihu.com': {
+                '/': this.parseZhihuZhuanlan,
+            },
         };
     }
 
@@ -157,14 +224,38 @@ class ContentParser {
         return parser;
     }
 
-    parse(url, content, callback) {
-        const urlObject = Url.parse(url);
-        const host = urlObject.host;
-        const path = urlObject.path;
-        const parser = this.distibuteParser(host, path);
-        parser(content, (res) => {
-            callback(res);
-        });
+    parse(tasks, callback) {
+        if (Array.isArray(tasks)) {
+            const funtions = [];
+            const resObj = {};
+            tasks.forEach((task) => {
+                funtions.push((funBack) => {
+                    const urlObject = Url.parse(task.url);
+                    const host = urlObject.host;
+                    const path = urlObject.path;
+                    const parser = this.distibuteParser(host, path);
+                    parser(task, (res) => {
+                        resObj[task.type] = res;
+                        funBack(null, res);
+                    });
+                });
+            });
+            Async.parallel(funtions, (err) => {
+                callback(resObj, err);
+            });
+        } else {
+            callback([], null);
+        }
+    }
+
+    parseZhihuZhuanlan(task, callback) {
+        let res = {};
+        if (task.contentHanlder) {
+            res = task.contentHanlder(task.content);
+        } else {
+            res = utils.safeJSONParse(task.content);
+        }
+        callback(res);
     }
 }
 
@@ -201,7 +292,7 @@ export default class Spider {
             if (error) {
                 callback(null, error);
             } else {
-                this.contentParser.parse(url, content, (res) => {
+                this.contentParser.parse(url, (res) => {
                     callback(res, null);
                 });
             }
@@ -236,14 +327,14 @@ export default class Spider {
     }
 
     fakeCrawler() {
-        // this.URLManager.insertURL('http://wiki.lianjia.com/pages/viewpage.action?pageId=12486259', null, this.contentHanlder.bind(this));
+        this.URLManager.insertURL('https://zhuanlan.zhihu.com/spatialeconomics', null, this.contentHanlder.bind(this));
     }
 
-    contentHanlder(url, content, error) {
+    contentHanlder(tasks, error) {
         if (error) {
             // utils.devLog(error);
         } else {
-            this.contentParser.parse(url, content, () => {});
+            this.contentParser.parse(tasks, () => {});
         }
     }
 }

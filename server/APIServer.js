@@ -4,12 +4,18 @@ import StoreManager from './StoreManager.js';
 import { funcCheck, safeJSONParse, devLog } from '../utils/misc.js';
 import Spider from './Spider.js';
 
+const Url = require('url');
+const Feed = require('feed');
 const Zlib = require('zlib');
 const QS = require('querystring');
 
 export default class APIServer {
     constructor() {
         this.apiMap = {
+            feed: {
+                zhihu: this.generateZhihuFeed,
+                weixin: this.generateWeixinFeed,
+            },
         };
 
         this.commonErrorResponse = {
@@ -27,6 +33,9 @@ export default class APIServer {
 
         this.spider = new Spider();
         // this.spider.fakeCrawler();
+        // this.generateZhihuFeed({ url: 'https://zhuanlan.zhihu.com/spatialeconomics' }, (res) => {
+        //     console.log(res);
+        // });
     }
 
     matchAPIPattern(path:string, query:Object) {
@@ -112,10 +121,81 @@ export default class APIServer {
             apiFunction(params, (response) => {
                 devLog(response);
                 const jsonRes = JSON.stringify(response);
-                res.end(jsonRes);
+                res.end(response);
             });
         } else {
             res.end(JSON.stringify(this.commonErrorResponse));
         }
+    }
+
+    generateZhihuFeed(params, callback) {
+        const back = funcCheck(callback);
+        let url = params.url;
+        url = decodeURIComponent(url);
+        if (url) {
+            const urlObject = Url.parse(url);
+            if (urlObject.host === 'zhuanlan.zhihu.com') {
+                this.spider.crawlUrl(url, (res, err) => {
+                    let data;
+                    if (err) {
+                        data = Object.assign({
+                            error: {
+                                msg: err.message,
+                            },
+                        }, this.commonErrorResponse);
+                    } else {
+                        const author = res.author;
+                        const content = res.content;
+                        if (!author || !content || !Array.isArray(content)) {
+                            this.spider.logErrorURL(url);
+                        }
+                        const feed = new Feed({
+                            title: `知乎专栏 - ${author.name}`,
+                            description: author.description,
+                            id: `https://zhuanlan.zhihu.com${author.url}`,
+                            link: `https://zhuanlan.zhihu.com${author.url}`,
+                            // updated:
+                            // image: 'http://example.com/image.png',
+                            // copyright: 'All rights reserved 2013, John Doe',
+                        });
+                        let feedUpdatedTime = new Date();
+                        content.forEach((ele, index) => {
+                            if (index === 0) {
+                                feedUpdatedTime = new Date(ele.publishedTime);
+                            }
+                            feed.addItem({
+                                title: ele.title,
+                                id: `https://zhuanlan.zhihu.com${ele.url}`,
+                                link: `https://zhuanlan.zhihu.com${ele.url}`,
+                                date: new Date(ele.publishedTime),
+                                content: ele.content,
+                                author: [{
+                                    name: ele.author.name,
+                                    link: ele.author.profileUrl,
+                                }],
+                            });
+                        });
+                        feed.updated = feedUpdatedTime;
+                        data = feed.render('atom-1.0');
+                    }
+                    back(data);
+                });
+            }
+        } else {
+            back(this.lackErrorResponse);
+        }
+    }
+
+    generateWeixinFeed(params, callback) {
+        const needRule = Number(params.needRule);
+        const categorys = StoreManager.instance().getCategorys();
+        if (!needRule) {
+            categorys.forEach((value) => {
+                const category = value;
+                category.rules = null;
+            });
+        }
+        const back = funcCheck(callback);
+        back(categorys);
     }
 }
