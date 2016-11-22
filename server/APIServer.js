@@ -32,8 +32,7 @@ export default class APIServer {
         };
 
         this.spider = new Spider();
-        // this.spider.fakeCrawler();
-        // this.generateZhihuFeed({ url: 'https://zhuanlan.zhihu.com/spatialeconomics' }, (res) => {
+        // this// this.generateZhihuFeed({ url: 'https://zhuanlan.zhihu.com/spatialeconomics' }, (res) => {
         //     console.log(res);
         // });
     }
@@ -120,7 +119,9 @@ export default class APIServer {
             devLog(params);
             apiFunction(params, (response) => {
                 devLog(response);
-                const jsonRes = JSON.stringify(response);
+                res.writeHead(200, {
+                    'Content-Type': 'text/xml; charset=UTF-8',
+                });
                 res.end(response);
             });
         } else {

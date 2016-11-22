@@ -116,7 +116,7 @@ class URLManager {
                 }
             }
         }
-        return handler;
+        return handler.bind(this);
     }
 
     _getDefaultHeader(host, path) {
@@ -187,6 +187,7 @@ class URLManager {
                 const contentTask = new URLTask();
                 contentTask.url = `https://zhuanlan.zhihu.com/api/columns/${zhuanlanName}/posts?limit=20`;
                 contentTask.type = 'content';
+                contentTask.contentHanlder = this.zhihuZhuanlanContentHanlder;
 
                 const authorTask = new URLTask();
                 authorTask.url = `https://zhuanlan.zhihu.com/api/columns/${zhuanlanName}`;
@@ -197,6 +198,29 @@ class URLManager {
             }
         }
         return tasks;
+    }
+
+    zhihuZhuanlanContentHanlder(content:Object) {
+        if (Array.isArray(content)) {
+            content.forEach((ele) => {
+                if (typeof (ele.content) === 'string') {
+                    const $ = Cheerio.load(ele.content, {
+                        normalizeWhitespace: true,
+                    });
+                    $('img').each((index, img) => {
+                        let src = $(img).attr('src');
+                        const urlObject = Url.parse(src);
+                        if (!urlObject.host) {
+                            src = `http://pic3.zhimg.com/${src}_b.jpg`;
+                            $(img).attr('src', src);
+                        }
+                    });
+                    ele.content = $.html();
+                    console.log($.html());
+                }
+            });
+        }
+        return content;
     }
 }
 
@@ -250,13 +274,14 @@ class ContentParser {
 
     parseZhihuZhuanlan(task, callback) {
         let res = {};
+        res = utils.safeJSONParse(task.content);
         if (task.contentHanlder) {
-            res = task.contentHanlder(task.content);
-        } else {
-            res = utils.safeJSONParse(task.content);
+            res = task.contentHanlder(res);
         }
         callback(res);
     }
+
+
 }
 
 class StoreKeeper {
