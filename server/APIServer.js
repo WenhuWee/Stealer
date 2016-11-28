@@ -8,6 +8,7 @@ const Url = require('url');
 const Feed = require('feed');
 const Zlib = require('zlib');
 const QS = require('querystring');
+const Async = require('async');
 
 export default class APIServer {
     constructor() {
@@ -188,15 +189,93 @@ export default class APIServer {
     }
 
     generateWeixinFeed(params, callback) {
-        const needRule = Number(params.needRule);
-        const categorys = StoreManager.instance().getCategorys();
-        if (!needRule) {
-            categorys.forEach((value) => {
-                const category = value;
-                category.rules = null;
+        const back = funcCheck(callback);
+        const name = params.name;
+        const generateErrorData = (err) => {
+            let data = {};
+            if (err) {
+                data = Object.assign({
+                    error: {
+                        msg: err.message,
+                    },
+                }, this.commonErrorResponse);
+            }
+            return data;
+        };
+
+        if (name) {
+            const url = `http://weixin.sogou.com/weixin?type=1&query=${name}`;
+            // sougou搜索
+            this.spider.crawlUrl(url, (res, err) => {
+                let data;
+                if (err) {
+                    data = generateErrorData(err);
+                } else {
+                    const profileUrl = res.sougouWeixin.url;
+                    if (profileUrl) {
+                        // 公众号的主页
+                        this.spider.crawlUrl(profileUrl, (profileRes, profileErr) => {
+                            if (profileErr) {
+                                data = generateErrorData(profileErr);
+                            } else {
+                                const content = profileRes.weixinProfile.content;
+                                // 主页里的文章
+                                if (Array.isArray(content)) {
+                                    const funtions = [];
+                                    const resObj = [];
+                                    content.forEach((msg, index) => {
+                                        funtions.push((funBack) => {
+                                            const articleUrl = msg.url;
+                                            this.spider.crawlUrl(articleUrl, (articleRes, articleErr) => {
+                                                const msgContent = Object.assign({
+                                                    content: articleRes.weixinArticle.content,
+                                                    index,
+                                                }, msg);
+                                                resObj.push(msgContent);
+                                                funBack(null, articleRes);
+                                            });
+                                        });
+                                    });
+                                    Async.parallel(funtions, (articlesErr) => {
+                                        if (!resObj.length) {
+                                            this.spider.logErrorURL(url);
+                                        }
+                                        resObj.sort((a, b) => a.index - b.index);
+                                        const feed = new Feed({
+                                            title: `公众号 - ${res.sougouWeixin.name}`,
+                                            description: res.sougouWeixin.description,
+                                            id: res.sougouWeixin.id,
+                                            link: profileUrl,
+                                            // updated:
+                                            // image: 'http://example.com/image.png',
+                                            // copyright: 'All rights reserved 2013, John Doe',
+                                        });
+                                        let feedUpdatedTime = new Date();
+                                        resObj.forEach((ele, index) => {
+                                            if (index === 0) {
+                                                feedUpdatedTime = new Date(ele.publishedTime);
+                                            }
+                                            feed.addItem({
+                                                title: ele.title,
+                                                id: ele.url,
+                                                link: ele.url,
+                                                date: new Date(ele.date),
+                                                content: ele.content,
+                                                author: [{
+                                                    name: ele.author,
+                                                }],
+                                            });
+                                        });
+                                        feed.updated = feedUpdatedTime;
+                                        data = feed.render('atom-1.0');
+                                        back(data);
+                                    });
+                                }
+                            }
+                        });
+                    }
+                }
             });
         }
-        const back = funcCheck(callback);
-        back(categorys);
     }
 }

@@ -50,6 +50,15 @@ class URLManager {
             'zhuanlan.zhihu.com': {
                 '/': this.handleZhihuZhuanlanUrl,
             },
+            'weixin.sogou.com': {
+                '/': this.handleSogouWeixinUrl,
+                '/weixin': this.handleSogouWeixinUrl,
+            },
+            'mp.weixin.qq.com': {
+                '/': this.handleWinxinProfileUrl,
+                '/profile': this.handleWinxinProfileUrl,
+                '/s': this.handleWeixinArticleUrl,
+            },
         };
     }
 
@@ -108,8 +117,8 @@ class URLManager {
         if (urlObject && urlObject.host) {
             const handlerSet = this.urlHandler[urlObject.host];
             if (handlerSet) {
-                if (urlObject.path) {
-                    handler = handlerSet[urlObject.path];
+                if (urlObject.pathname) {
+                    handler = handlerSet[urlObject.pathname];
                 }
                 if (!handler) {
                     handler = handlerSet['/'];
@@ -124,9 +133,9 @@ class URLManager {
         const hostRule = this.defaultHeader[host];
         if (hostRule) {
             header = hostRule[path];
-        }
-        if (!header) {
-            header = hostRule['/'];
+            if (!header) {
+                header = hostRule['/'];
+            }
         }
         return header;
     }
@@ -174,6 +183,40 @@ class URLManager {
             newTask.error = error;
             callback();
         });
+    }
+
+    handleWeixinArticleUrl(url) {
+        const tasks = [];
+        if (url) {
+            const contentTask = new URLTask();
+            contentTask.url = url;
+            contentTask.type = 'weixinArticle';
+            tasks.push(contentTask);
+        }
+        return tasks;
+    }
+
+    handleWinxinProfileUrl(url) {
+        const tasks = [];
+        if (url) {
+            const contentTask = new URLTask();
+            contentTask.url = url;
+            contentTask.type = 'weixinProfile';
+            tasks.push(contentTask);
+        }
+        return tasks;
+    }
+
+// Sougou Weixin
+    handleSogouWeixinUrl(url) {
+        const tasks = [];
+        if (url) {
+            const contentTask = new URLTask();
+            contentTask.url = url;
+            contentTask.type = 'sougouWeixin';
+            tasks.push(contentTask);
+        }
+        return tasks;
     }
 
     // zhihu专栏
@@ -230,6 +273,13 @@ class ContentParser {
             'zhuanlan.zhihu.com': {
                 '/': this.parseZhihuZhuanlan,
             },
+            'weixin.sogou.com': {
+                '/weixin': this.parseSougouWeixin,
+            },
+            'mp.weixin.qq.com': {
+                '/profile': this.parseWeixinProfile,
+                '/s': this.parseWeixinArticle,
+            },
         };
     }
 
@@ -243,7 +293,7 @@ class ContentParser {
             }
         }
         if (!parser) {
-            parser = () => {};
+            parser = (task, callback) => { callback(null); };
         }
         return parser;
     }
@@ -256,7 +306,7 @@ class ContentParser {
                 funtions.push((funBack) => {
                     const urlObject = Url.parse(task.url);
                     const host = urlObject.host;
-                    const path = urlObject.path;
+                    const path = urlObject.pathname;
                     const parser = this.distibuteParser(host, path);
                     parser(task, (res) => {
                         resObj[task.type] = res;
@@ -281,7 +331,103 @@ class ContentParser {
         callback(res);
     }
 
+    parseSougouWeixin(task, callback) {
+        let res = {};
+        if (task.contentHanlder) {
+            res = task.contentHanlder(utils.safeJSONParse(task.content));
+        } else {
+            const $ = Cheerio.load(task.content, {
+                normalizeWhitespace: true,
+            });
+            const firstItem = $('#sogou_vr_11002301_box_0');
+            const aTag = firstItem.find('.gzh-box2 .img-box a');
+            const url = aTag.attr('href');
 
+            const nameTag = firstItem.find('.gzh-box2 .txt-box a');
+            const name = nameTag.text();
+
+            const description = firstItem.find('dl dd').first().text();
+
+            res.url = url;
+            res.name = name;
+            res.description = description;
+
+            const taskUrlObject = Url.parse(task.url);
+            if (taskUrlObject) {
+                const params = QS.parse(taskUrlObject.query);
+                res.id = params.query;
+            }
+        }
+        callback(res);
+    }
+
+    parseWeixinArticle(task, callback) {
+        let res = {};
+        if (task.contentHanlder) {
+            res = task.contentHanlder(utils.safeJSONParse(task.content));
+        } else {
+            const $ = Cheerio.load(task.content, {
+                normalizeWhitespace: true,
+            });
+            const content = $('#img-content .rich_media_content');
+            content.find('img').each((index, img) => {
+                const src = $(img).attr('data-src');
+                $(img).attr('src', src);
+            });
+            res.content = content.html();
+        }
+        callback(res);
+    }
+
+    parseWeixinProfile(task, callback) {
+        let res = {};
+        if (task.contentHanlder) {
+            res = task.contentHanlder(utils.safeJSONParse(task.content));
+        } else {
+            const $ = Cheerio.load(task.content, {
+                normalizeWhitespace: true,
+            });
+            const script = $('script').filter(function (i, el) {
+                const text = $(this).text();
+                return text.indexOf('var biz') !== -1;
+            });
+            if (script) {
+                const text = script.text();
+                if (text) {
+                    const startString = 'var msgList';
+                    const endString = '};';
+                    const msgListStartIndex = text.indexOf(startString) + startString.length + 2;
+                    const msgListEndIndex = text.indexOf(endString) + 1;
+                    if (msgListStartIndex !== -1 && msgListEndIndex !== -1) {
+                        const msgs = text.substring(msgListStartIndex, msgListEndIndex);
+                        if (msgs) {
+                            const obj = utils.safeJSONParse(msgs);
+                            const msgList = obj.list;
+                            const contents = [];
+                            if (Array.isArray(msgList)) {
+                                msgList.forEach((ele) => {
+                                    const msg = {};
+                                    msg.author = ele.app_msg_ext_info.author;
+                                    msg.title = ele.app_msg_ext_info.title;
+                                    if (ele.app_msg_ext_info.content_url) {
+                                        const decodeURL = ele.app_msg_ext_info.content_url.replace(/&amp;/g, '&');
+                                        msg.url = `http://mp.weixin.qq.com${decodeURL}`;
+                                    }
+                                    msg.date = ele.comm_msg_info.datetime;
+                                    contents.push(msg);
+                                });
+                            }
+
+                            if (obj) {
+                                res.content = contents;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        callback(res);
+    }
 }
 
 class StoreKeeper {
