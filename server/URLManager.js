@@ -5,7 +5,6 @@ const Http = require('http');
 const Https = require('https');
 const Url = require('url');
 const Async = require('async');
-const Cheerio = require('cheerio');
 
 export default class URLManager {
     constructor() {
@@ -18,20 +17,6 @@ export default class URLManager {
         this.defaultHeader = {
             'zhuanlan.zhihu.com': {
                 '/': '',
-            },
-        };
-        this.urlHandler = {
-            'zhuanlan.zhihu.com': {
-                '/': this.handleZhihuZhuanlanUrl,
-            },
-            'weixin.sogou.com': {
-                '/': this.handleSogouWeixinUrl,
-                '/weixin': this.handleSogouWeixinUrl,
-            },
-            'mp.weixin.qq.com': {
-                '/': this.handleWinxinProfileUrl,
-                '/profile': this.handleWinxinProfileUrl,
-                '/s': this.handleWeixinArticleUrl,
             },
         };
     }
@@ -74,7 +59,7 @@ export default class URLManager {
     insertURL(url, header, callback) {
         if (this.crawlerQueue) {
             let tasks = [];
-            const handler = this._getUrlHandler(url);
+            const handler = URLManager.getUrlHandler(url);
             if (handler) {
                 tasks = handler(url);
             }
@@ -91,32 +76,6 @@ export default class URLManager {
                 tasks,
             }, callback);
         }
-    }
-
-    urlTasksFromURL(url) {
-        let tasks = [];
-        const handler = this._getUrlHandler(url);
-        if (handler) {
-            tasks = handler(url);
-        }
-        return tasks;
-    }
-
-    _getUrlHandler(url) {
-        const urlObject = Url.parse(url);
-        let handler = null;
-        if (urlObject && urlObject.host) {
-            const handlerSet = this.urlHandler[urlObject.host];
-            if (handlerSet) {
-                if (urlObject.pathname) {
-                    handler = handlerSet[urlObject.pathname];
-                }
-                if (!handler) {
-                    handler = handlerSet['/'];
-                }
-            }
-        }
-        return handler.bind(this);
     }
 
     _getDefaultHeader(host, path) {
@@ -176,61 +135,102 @@ export default class URLManager {
             callback();
         });
     }
+}
 
-    handleWeixinArticleUrl(url) {
-        const tasks = [];
-        if (url) {
+function handleZhihuZhuanlanUrl(url) {
+    const tasks = [];
+    if (url) {
+        const urlObject = Url.parse(url);
+        const paths = urlObject.pathname.split('/');
+        const zhuanlanName = paths[1];
+        if (zhuanlanName) {
             const contentTask = new URLTask();
-            contentTask.url = url;
-            contentTask.type = 'weixinArticle';
-            tasks.push(contentTask);
-        }
-        return tasks;
-    }
+            contentTask.url = `https://zhuanlan.zhihu.com/api/columns/${zhuanlanName}/posts?limit=20`;
+            contentTask.type = 'content';
 
-    handleWinxinProfileUrl(url) {
-        const tasks = [];
-        if (url) {
-            const contentTask = new URLTask();
-            contentTask.url = url;
-            contentTask.type = 'weixinProfile';
+            const authorTask = new URLTask();
+            authorTask.url = `https://zhuanlan.zhihu.com/api/columns/${zhuanlanName}`;
+            authorTask.type = 'author';
+
             tasks.push(contentTask);
+            tasks.push(authorTask);
         }
-        return tasks;
     }
+    return tasks;
+}
+
+function handleWeixinArticleUrl(url) {
+    const tasks = [];
+    if (url) {
+        const contentTask = new URLTask();
+        contentTask.url = url;
+        contentTask.type = 'weixinArticle';
+        tasks.push(contentTask);
+    }
+    return tasks;
+}
+
+function handleWinxinProfileUrl(url) {
+    const tasks = [];
+    if (url) {
+        const contentTask = new URLTask();
+        contentTask.url = url;
+        contentTask.type = 'weixinProfile';
+        tasks.push(contentTask);
+    }
+    return tasks;
+}
 
 // Sougou Weixin
-    handleSogouWeixinUrl(url) {
-        const tasks = [];
-        if (url) {
-            const contentTask = new URLTask();
-            contentTask.url = url;
-            contentTask.type = 'sougouWeixin';
-            tasks.push(contentTask);
-        }
-        return tasks;
+function handleSogouWeixinUrl(url) {
+    const tasks = [];
+    if (url) {
+        const contentTask = new URLTask();
+        contentTask.url = url;
+        contentTask.type = 'sougouWeixin';
+        tasks.push(contentTask);
     }
+    return tasks;
+}
 
-    // zhihu专栏
-    handleZhihuZhuanlanUrl(url) {
-        const tasks = [];
-        if (url) {
-            const urlObject = Url.parse(url);
-            const paths = urlObject.pathname.split('/');
-            const zhuanlanName = paths[1];
-            if (zhuanlanName) {
-                const contentTask = new URLTask();
-                contentTask.url = `https://zhuanlan.zhihu.com/api/columns/${zhuanlanName}/posts?limit=20`;
-                contentTask.type = 'content';
 
-                const authorTask = new URLTask();
-                authorTask.url = `https://zhuanlan.zhihu.com/api/columns/${zhuanlanName}`;
-                authorTask.type = 'author';
+URLManager.urlHandler = {
+    'zhuanlan.zhihu.com': {
+        '/': handleZhihuZhuanlanUrl,
+    },
+    'weixin.sogou.com': {
+        '/': handleSogouWeixinUrl,
+        '/weixin': handleSogouWeixinUrl,
+    },
+    'mp.weixin.qq.com': {
+        '/': handleWinxinProfileUrl,
+        '/profile': handleWinxinProfileUrl,
+        '/s': handleWeixinArticleUrl,
+    },
+};
 
-                tasks.push(contentTask);
-                tasks.push(authorTask);
+function getUrlHandler(url) {
+    const urlObject = Url.parse(url);
+    let handler = null;
+    if (urlObject && urlObject.host) {
+        const handlerSet = URLManager.urlHandler[urlObject.host];
+        if (handlerSet) {
+            if (urlObject.pathname) {
+                handler = handlerSet[urlObject.pathname];
+            }
+            if (!handler) {
+                handler = handlerSet['/'];
             }
         }
-        return tasks;
     }
+    return handler;
 }
+
+URLManager.urlTasksFromURL = (url) => {
+    let tasks = [];
+    const handler = getUrlHandler(url);
+    if (handler) {
+        tasks = handler(url);
+    }
+    return tasks;
+};

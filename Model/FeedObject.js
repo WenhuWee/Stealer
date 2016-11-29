@@ -1,4 +1,6 @@
 
+import { Map } from 'immutable';
+
 const Feed = require('feed');
 
 export class FeedObject {
@@ -6,11 +8,10 @@ export class FeedObject {
     description: string;
     id: string;
     link: string;
-    updated: Date;
-    items: Array;
+    items: Map;
 
     constructor() {
-        this.items = [];
+        this.items = new Map();
     }
 
     copy() {
@@ -29,7 +30,16 @@ export class FeedObject {
             keys.forEach((key) => {
                 if (!exceptProp[key]) {
                     if (key === 'items') {
-                        mergedFeed.items = newFeed.items.copyWithin();
+                        if (newFeed.items.size) {
+                            newFeed.items.forEach((value, itemKey) => {
+                                if (mergedFeed.items.get(itemKey)) {
+                                    const mergedItem = mergedFeed.items.get(itemKey).merge(value);
+                                    mergedFeed.items = mergedFeed.items.set(itemKey, mergedItem);
+                                } else {
+                                    mergedFeed.addItem(value);
+                                }
+                            });
+                        }
                     } else {
                         mergedFeed[key] = newFeed[key];
                     }
@@ -42,7 +52,9 @@ export class FeedObject {
     }
 
     addItem(item) {
-        this.items.push(item);
+        if (item.id) {
+            this.items = this.items.set(item.id, item);
+        }
     }
 
     generateRSSXML() {
@@ -52,10 +64,10 @@ export class FeedObject {
             id: this.id,
             link: this.link,
         });
-        let feedUpdatedTime = new Date();
-        this.items.forEach((ele, index) => {
-            if (index === 0) {
-                feedUpdatedTime = new Date(ele.publishedTime);
+        let feedUpdatedTime = new Date(1989 - 12 - 12);
+        this.items.forEach((ele, key) => {
+            if (feedUpdatedTime < ele.updated) {
+                feedUpdatedTime = ele.updated;
             }
             feed.addItem({
                 title: ele.title,
@@ -70,7 +82,13 @@ export class FeedObject {
             });
         });
         feed.updated = feedUpdatedTime;
-        return feed.render('atom-1.0');
+        let xml = null;
+        try {
+            xml = feed.render('atom-1.0');
+        } catch (e) {
+            console.log(e);
+        }
+        return xml;
     }
 }
 
@@ -82,4 +100,28 @@ export class FeedItemObject {
     content: string;
     authorName: string;
     authorLink: string;
+
+    copy() {
+        const feed = new FeedItemObject();
+        const keys = Object.keys(this);
+        keys.forEach((key) => {
+            feed[key] = this[key];
+        });
+        return feed;
+    }
+
+    merge(newFeedItem:FeedItemObject, exceptProp:Object = {}) {
+        if (newFeedItem instanceof FeedItemObject) {
+            const mergedFeed = this.copy();
+            const keys = Object.keys(newFeedItem);
+            keys.forEach((key) => {
+                if (!exceptProp[key]) {
+                    mergedFeed[key] = newFeedItem[key];
+                }
+            });
+            return mergedFeed;
+        } else {
+            return this.copy();
+        }
+    }
 }

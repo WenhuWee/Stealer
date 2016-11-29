@@ -2,12 +2,12 @@
 import * as utils from '../utils/misc.js';
 import { ParseTask, URLTask } from '../Model/CrawlTask.js';
 import { FeedObject, FeedItemObject } from '../Model/FeedObject.js';
+import URLManager from './URLManager.js';
 
 const Async = require('async');
 const Cheerio = require('cheerio');
 const QS = require('querystring');
 const Url = require('url');
-const Feed = require('feed');
 
 export default class ContentParser {
     constructor() {
@@ -43,7 +43,7 @@ export default class ContentParser {
     parse(tasks, callback) {
         if (Array.isArray(tasks)) {
             const funtions = [];
-            const newURLTasks = [];
+            let newURLTasks = [];
             let feed = new FeedObject();
             tasks.forEach((task) => {
                 funtions.push((funBack) => {
@@ -51,13 +51,14 @@ export default class ContentParser {
                     const host = urlObject.host;
                     const path = urlObject.pathname;
                     const parser = this.distibuteParser(host, path);
-                    parser(task, (newTask) => {
-                        if (newTask instanceof ParseTask) {
-                            feed = feed.merge(newTask.feed);
-                        } else if (newTask instanceof URLTask) {
-                            newURLTasks.push(URLTask);
+                    parser(task, (newTasks, parseTask, err) => {
+                        if (newTasks.length) {
+                            newURLTasks = newURLTasks.concat(newTasks);
                         }
-                        funBack(null, newTask);
+                        if (parseTask instanceof ParseTask) {
+                            feed = feed.merge(parseTask.feed);
+                        }
+                        funBack(null, newTasks);
                     });
                 });
             });
@@ -122,7 +123,7 @@ export default class ContentParser {
             parseTask.feed = feed;
         }
         parseTask.content = res;
-        callback(parseTask);
+        callback([], parseTask, null);
     }
 
     parseSougouWeixin(task, callback) {
@@ -144,18 +145,14 @@ export default class ContentParser {
             id = params.query;
         }
 
-        const urlTasks = [];
-        const contentTask = new URLTask();
-        contentTask.url = url;
-        contentTask.type = 'weixinProfile';
-        urlTasks.push(contentTask);
+        const urlTasks = URLManager.urlTasksFromURL(url);
 
         const parseTask = task.copy();
-        parseTask.feed = new Feed({
-            title: `公众号 - ${name}`,
-            description,
-            id,
-        });
+        parseTask.feed = new FeedObject();
+        parseTask.feed.title = `公众号 - ${name}`;
+        parseTask.feed.description = description;
+        parseTask.feed.id = id;
+
         callback(urlTasks, parseTask, null);
     }
 
@@ -170,12 +167,15 @@ export default class ContentParser {
         });
 
         const parseTask = task.copy();
-        parseTask.content = content.html();
+        parseTask.feed = new FeedObject();
+        const item = new FeedItemObject();
+        item.content = content.html();
+        item.id = task.url;
+        parseTask.feed.addItem(item);
         callback([], parseTask, null);
     }
 
     parseWeixinProfile(task, callback) {
-        const res = {};
         const $ = Cheerio.load(task.content, {
             normalizeWhitespace: true,
         });
@@ -183,6 +183,12 @@ export default class ContentParser {
             const text = $(this).text();
             return text.indexOf('var biz') !== -1;
         });
+
+        const parseTask = task.copy();
+        parseTask.feed = new FeedObject();
+        parseTask.feed.link = task.url;
+        let urlTasks = [];
+
         if (script) {
             const text = script.text();
             if (text) {
@@ -195,28 +201,28 @@ export default class ContentParser {
                     if (msgs) {
                         const obj = utils.safeJSONParse(msgs);
                         const msgList = obj.list;
-                        const contents = [];
                         if (Array.isArray(msgList)) {
                             msgList.forEach((ele) => {
-                                const msg = {};
-                                msg.author = ele.app_msg_ext_info.author;
-                                msg.title = ele.app_msg_ext_info.title;
+                                const feedItem = new FeedItemObject();
+                                feedItem.authorName = ele.app_msg_ext_info.author;
+                                feedItem.title = ele.app_msg_ext_info.title;
+                                feedItem.date = new Date(ele.comm_msg_info.datetime);
                                 if (ele.app_msg_ext_info.content_url) {
                                     const decodeURL = ele.app_msg_ext_info.content_url.replace(/&amp;/g, '&');
-                                    msg.url = `http://mp.weixin.qq.com${decodeURL}`;
-                                }
-                                msg.date = ele.comm_msg_info.datetime;
-                                contents.push(msg);
-                            });
-                        }
+                                    const msgurl = `http://mp.weixin.qq.com${decodeURL}`;
+                                    const urlTask = URLManager.urlTasksFromURL(msgurl);
+                                    urlTasks = urlTasks.concat(urlTask);
 
-                        if (obj) {
-                            res.content = contents;
+                                    feedItem.link = msgurl;
+                                    feedItem.id = msgurl;
+                                }
+                                parseTask.feed.addItem(feedItem);
+                            });
                         }
                     }
                 }
             }
         }
-        callback(res);
+        callback(urlTasks, parseTask, null);
     }
 }

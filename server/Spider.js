@@ -30,7 +30,7 @@ export default class Spider {
     }
 
     crawlUrl(target, callback) {
-        const urlTasks = this.URLManager.urlTasksFromURL(target);
+        const urlTasks = URLManager.urlTasksFromURL(target);
         this.crawlURLTasks(urlTasks, callback);
     }
 
@@ -43,14 +43,23 @@ export default class Spider {
                     if (err) {
                         callback(null, err);
                     } else if (urlTasks && urlTasks.length) {
-                        this.crawlURLTasks(urlTasks, callback, prevFeed);
-                    } else if (feed) {
-                        let newFeed = prevFeed;
-                        if (!newFeed) {
-                            newFeed = new FeedObject();
+                        let mergedFeed = prevFeed;
+                        if (!mergedFeed) {
+                            mergedFeed = new FeedObject();
                         }
-                        newFeed = newFeed.merge(feed);
-                        callback(newFeed, null);
+                        mergedFeed = mergedFeed.merge(feed);
+                        this.crawlURLTasks(urlTasks, callback, mergedFeed);
+                    } else if (feed) {
+                        let mergedFeed2 = prevFeed;
+                        if (!mergedFeed2) {
+                            mergedFeed2 = new FeedObject();
+                        }
+                        mergedFeed2 = mergedFeed2.merge(feed);
+                        if (mergedFeed2.items && mergedFeed2.items.size) {
+                            callback(mergedFeed2, null);
+                        } else {
+                            callback(null, Error('Unkonw'));
+                        }
                     } else {
                         callback(prevFeed, null);
                     }
