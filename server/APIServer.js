@@ -137,7 +137,7 @@ export default class APIServer {
         if (url) {
             const urlObject = Url.parse(url);
             if (urlObject.host === 'zhuanlan.zhihu.com') {
-                this.spider.crawlUrl(url, (res, err) => {
+                this.spider.crawlUrl(url, (feed, err) => {
                     let data;
                     if (err) {
                         data = Object.assign({
@@ -145,43 +145,13 @@ export default class APIServer {
                                 msg: err.message,
                             },
                         }, this.commonErrorResponse);
-                    } else {
-                        const author = res.author;
-                        const content = res.content;
-                        if (!author || !content || !Array.isArray(content)) {
-                            this.spider.logErrorURL(url);
-                        }
-                        const feed = new Feed({
-                            title: `知乎专栏 - ${author.name}`,
-                            description: author.description,
-                            id: `https://zhuanlan.zhihu.com${author.url}`,
-                            link: `https://zhuanlan.zhihu.com${author.url}`,
-                            // updated:
-                            // image: 'http://example.com/image.png',
-                            // copyright: 'All rights reserved 2013, John Doe',
-                        });
-                        let feedUpdatedTime = new Date();
-                        content.forEach((ele, index) => {
-                            if (index === 0) {
-                                feedUpdatedTime = new Date(ele.publishedTime);
-                            }
-                            feed.addItem({
-                                title: ele.title,
-                                id: `https://zhuanlan.zhihu.com${ele.url}`,
-                                link: `https://zhuanlan.zhihu.com${ele.url}`,
-                                date: new Date(ele.publishedTime),
-                                content: ele.content,
-                                author: [{
-                                    name: ele.author.name,
-                                    link: ele.author.profileUrl,
-                                }],
-                            });
-                        });
-                        feed.updated = feedUpdatedTime;
-                        data = feed.render('atom-1.0');
+                    } else if (feed) {
+                        data = feed.generateRSSXML();
                     }
                     back(data);
                 });
+            } else {
+                back(this.lackErrorResponse);
             }
         } else {
             back(this.lackErrorResponse);
@@ -206,7 +176,7 @@ export default class APIServer {
         if (name) {
             const url = `http://weixin.sogou.com/weixin?type=1&query=${name}`;
             // sougou搜索
-            this.spider.crawlUrl(url, (res, err) => {
+            this.spider.crawlUrl(url, (urlTasks, parseTask, err) => {
                 let data;
                 if (err) {
                     data = generateErrorData(err);
