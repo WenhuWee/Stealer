@@ -34,7 +34,7 @@ export class FeedObject {
                             newFeed.items.forEach((value, itemKey) => {
                                 if (mergedFeed.items.get(itemKey)) {
                                     const mergedItem = mergedFeed.items.get(itemKey).merge(value);
-                                    mergedFeed.items = mergedFeed.items.set(itemKey, mergedItem);
+                                    mergedFeed.addItem(mergedItem);
                                 } else {
                                     mergedFeed.addItem(value);
                                 }
@@ -64,11 +64,19 @@ export class FeedObject {
             id: this.id,
             link: this.link,
         });
-        let feedUpdatedTime = new Date(1989 - 12 - 12);
-        this.items.forEach((ele, key) => {
-            if (feedUpdatedTime < ele.updated) {
-                feedUpdatedTime = ele.updated;
+
+        const items = [];
+        this.items.forEach((ele) => {
+            items.push(ele);
+        });
+        items.sort((a, b) => 0 - (a.date - b.date));
+
+        let feedUpdatedTime = new Date();
+        items.forEach((ele, index) => {
+            if (index === 0) {
+                feedUpdatedTime = ele.date;
             }
+
             feed.addItem({
                 title: ele.title,
                 id: ele.id,
@@ -81,6 +89,7 @@ export class FeedObject {
                 }],
             });
         });
+
         feed.updated = feedUpdatedTime;
         let xml = null;
         try {
