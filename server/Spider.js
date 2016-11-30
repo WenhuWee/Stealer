@@ -4,8 +4,8 @@ import ContentParser from './ContentParser.js';
 import StoreManager from './StoreManager.js';
 import { TimingCrawlTask } from '../Model/CrawlTask.js';
 import { FeedObject } from '../Model/FeedObject.js';
+import { devLog } from '../utils/misc.js';
 
-const Url = require('url');
 const FS = require('fs');
 const Path = require('path');
 
@@ -24,7 +24,7 @@ export default class Spider {
                 urls.forEach((ele, index) => {
                     setTimeout((url) => {
                         this.startTimerWithUrl(url);
-                    }, 2 * 1000 * index, ele);
+                    }, this.getTimeOutTime(index), ele);
                 });
             }
         });
@@ -42,12 +42,33 @@ export default class Spider {
         }
     }
 
+    getTimeOutTime(base) {
+        if (process.env.NODE_ENV === 'production') {
+            return 2 * 60 * 1000 * base;
+        } else {
+            return 2 * 1000 * base;
+        }
+    }
+
+    stopTimerWithUrl(url) {
+        if (url) {
+            const timer = this.crawlTimers[url];
+            if (timer) {
+                timer.stop();
+                delete this.crawlTimers[url];
+            }
+        }
+    }
+
     startTimerWithUrl(url) {
         if (url && !this.crawlTimers[url]) {
-            const timer = new TimingCrawlTask(url, 8);
+            const timer = new TimingCrawlTask(url, 4);
             this.crawlTimers[url] = timer;
             timer.start((crawlUrl) => {
-                this.crawlUrl(crawlUrl, (feed) => {
+                devLog('------timer--------');
+                devLog(crawlUrl);
+                this.crawlUrl(crawlUrl, (feed, error) => {
+                    devLog(error);
                     if (feed) {
                         const xml = feed.generateRSSXML();
                         if (xml) {

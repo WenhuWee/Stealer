@@ -8,7 +8,11 @@ export class TimingCrawlTask {
 
     constructor(url, interval) {
         this.url = url;
-        this.interval = interval * 1000;
+        if (process.env.NODE_ENV === 'production') {
+            this.interval = interval * 1000 * 60 * 60; // hour
+        } else {
+            this.interval = interval * 1000; // second
+        }
     }
 
     start(callback) {

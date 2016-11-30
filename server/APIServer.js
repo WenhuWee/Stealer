@@ -99,7 +99,6 @@ export default class APIServer {
             }
 
             currentAPIObject = currentAPIObject[route];
-            devLog(currentAPIObject);
             if (!currentAPIObject) {
                 return false;
             } else if (typeof (currentAPIObject) === 'object') {
@@ -112,13 +111,14 @@ export default class APIServer {
 
         if (typeof (currentAPIObject) === 'function') {
             const apiFunction = currentAPIObject.bind(this);
+            devLog(apiFunction);
             let params = this.getParamas(req);
             if (!params) {
                 params = {};
             }
             devLog(params);
             apiFunction(params, (response, error) => {
-                devLog(response);
+                devLog(error);
                 let newRes;
                 if (error) {
                     newRes = JSON.stringify(newRes);
@@ -194,9 +194,9 @@ export default class APIServer {
 
     getWeixinFeed(params, callback) {
         const back = funcCheck(callback);
-        let url = params.url;
-        url = decodeURIComponent(url);
-        if (url) {
+        const name = params.name;
+        if (name) {
+            const url = `http://weixin.sogou.com/weixin?type=1&query=${name}`;
             StoreManager.instance().getRSSXML(url, (xml) => {
                 if (xml) {
                     back(xml);
@@ -206,6 +206,7 @@ export default class APIServer {
                             back(null, error);
                         } else if (res) {
                             StoreManager.instance().setRSSSource(url, res);
+                            this.spider.startTimerWithUrl(url);
                             back(res, null);
                         } else {
                             back(null, Error('unknown'));

@@ -3,6 +3,7 @@ import { funcCheck, safeJSONParse } from '../utils/misc.js';
 
 const Path = require('path');
 const Nedb = require('nedb');
+const FS = require('fs');
 
 let instance = null;
 
@@ -18,12 +19,23 @@ export default class StoreManager {
     }
 
     init() {
+        // this._clearDB();
+
         const appPath = Path.resolve('./');
         const dirPath = Path.join(appPath, 'data');
         const dbPath = Path.join(dirPath, `${filePrefix}db`);
         this.db = new Nedb({ filename: dbPath, autoload: true });
 
+
         // this._initTestData();
+    }
+
+    _clearDB() {
+        const appPath = Path.resolve('./');
+        const dirPath = Path.join(appPath, 'data');
+        const dbPath = Path.join(dirPath, `${filePrefix}db`);
+        FS.unlink(dbPath, () => {
+        });
     }
 
     getAllURL(callback) {
@@ -34,7 +46,9 @@ export default class StoreManager {
         this.db.find({}).projection({ url: 1 }).exec((err, docs) => {
             if (!err) {
                 docs.forEach((ele) => {
-                    urls.push(ele.url);
+                    if (ele.url) {
+                        urls.push(ele.url);
+                    }
                 });
             }
             callback(urls);
@@ -43,8 +57,15 @@ export default class StoreManager {
 
     setRSSSource(url, xml) {
         if (url && xml && this.db) {
-            this.db.insert({ url, xml }, (err, newDocs) => {
-                console.log(newDocs);
+            this.db.find({ url }, (err, docs) => {
+                if (docs.length) {
+                    this.db.update({ url }, { xml }, {}, (updateErr) => {
+                    });
+                } else {
+                    this.db.insert({ url, xml }, (insertErr) => {
+                        // console.log(newDocs);
+                    });
+                }
             });
         }
     }

@@ -96,7 +96,7 @@ export class FeedObject {
         try {
             xml = feed.render('atom-1.0');
         } catch (e) {
-            console.log(e);
+            // console.log(e);
         }
         return xml;
     }
