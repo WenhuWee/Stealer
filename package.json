@@ -100,6 +100,7 @@
   },
   "dependencies": {
     "body-parser": "^1.15.2",
+    "feed": "^0.3.0",
     "immutable": "^3.8.1",
     "nedb": "^1.8.0",
     "react-router-redux": "^4.0.5",
