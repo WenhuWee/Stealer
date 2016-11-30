@@ -37,6 +37,7 @@ export default class Spider {
     crawlURLTasks(tasks, callback, prevFeed = null) {
         this.URLManager.insertURLTasks(tasks, (parseTasks, error) => {
             if (error) {
+                this.logWithTasks(parseTasks);
                 callback(null, error);
             } else {
                 this.contentParser.parse(parseTasks, (urlTasks, feed, err) => {
@@ -68,31 +69,44 @@ export default class Spider {
         });
     }
 
-    logErrorURL(url) {
-        const decodeURL = decodeURIComponent(url);
-        const urlObject = Url.parse(decodeURL);
-        if (urlObject && urlObject.host) {
-            const hostObject = this.errorURL[urlObject.host];
-            if (hostObject) {
-                const errorCount = hostObject[decodeURL];
-                if (typeof errorCount === 'number') {
-                    hostObject[decodeURL] = errorCount + 1;
-                } else {
-                    hostObject[decodeURL] = 1;
+    logWithTasks(tasks) {
+        if (Array.isArray(tasks)) {
+            tasks.forEach((ele) => {
+                if (ele.error) {
+                    this.logError(ele.url, ele.error.message);
                 }
-            } else {
-                const host = {};
-                host[decodeURL] = 1;
-                this.errorURL[urlObject.host] = host;
-            }
-            console.log(this.errorURL);
-            const name = 'spider_crawl_fail.log';
-            const path = Path.join(this.logPath, name);
-            const value = JSON.stringify(this.errorURL);
-            FS.writeFile(path, value, (err) => {
-                // err
             });
+            this.dumpToFile();
         }
+    }
+
+    logError(url, reason) {
+        if (!url || !reason) {
+            return;
+        }
+        const decodeURL = decodeURIComponent(url);
+
+        const currentDate = new Date();
+        const currentDateString = currentDate.toString();
+
+        let errorArray = this.errorURL[decodeURL];
+        if (!errorArray) {
+            errorArray = [];
+            this.errorURL[url] = errorArray;
+        }
+        if (errorArray.length > 10) {
+            errorArray = errorArray.slice(5);
+        }
+        errorArray.push(reason + currentDateString);
+    }
+
+    dumpToFile() {
+        const name = 'spider_crawl_fail.log';
+        const path = Path.join(this.logPath, name);
+        const value = JSON.stringify(this.errorURL);
+        FS.writeFile(path, value, (err) => {
+            // err
+        });
     }
 
     fakeCrawler() {

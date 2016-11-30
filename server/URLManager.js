@@ -132,7 +132,7 @@ export default class URLManager {
 
         request.on('error', (error) => {
             parseTask.error = error;
-            callback();
+            callback(parseTask);
         });
     }
 }

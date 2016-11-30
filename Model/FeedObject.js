@@ -1,5 +1,6 @@
 
 import { Map } from 'immutable';
+import * as utils from '../utils/misc.js';
 
 const Feed = require('feed');
 
