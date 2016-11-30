@@ -11,7 +11,7 @@ export class TimingCrawlTask {
         if (process.env.NODE_ENV === 'production') {
             this.interval = interval * 1000 * 60 * 60; // hour
         } else {
-            this.interval = interval * 1000; // second
+            this.interval = 5 * interval * 1000; // second
         }
     }
 

@@ -15,6 +15,9 @@ export default class APIServer {
                 zhihu: this.getZhihuFeed,
                 weixin: this.getWeixinFeed,
             },
+            info: {
+                status: this.getCurrentStatus,
+            },
         };
 
         this.commonErrorResponse = {
@@ -121,13 +124,16 @@ export default class APIServer {
                 devLog(error);
                 let newRes;
                 if (error) {
-                    newRes = JSON.stringify(newRes);
+                    newRes = JSON.stringify(error);
+                    res.writeHead(200, {
+                        'Content-Type': 'application/json; charset=UTF-8',
+                    });
                 } else {
                     newRes = response;
+                    res.writeHead(200, {
+                        'Content-Type': 'text/xml; charset=UTF-8',
+                    });
                 }
-                res.writeHead(200, {
-                    'Content-Type': 'text/xml; charset=UTF-8',
-                });
                 res.end(newRes);
             });
         } else {
@@ -135,6 +141,25 @@ export default class APIServer {
         }
     }
 
+    getCurrentStatus(params, callback) {
+        const res = {};
+
+        const timers = [];
+        const keys = Object.keys(this.spider.crawlTimers);
+        keys.forEach((key) => {
+            const timer = {};
+            timer.url = this.spider.crawlTimers[key].url;
+            timer.interval = this.spider.crawlTimers[key].interval;
+            timers.push(timer);
+        });
+        res.timers = timers;
+        StoreManager.instance().getAllDocs((docs) => {
+            if (Array.isArray(docs)) {
+                res.dbUrls = docs;
+            }
+            callback(null, res);
+        });
+    }
 
     getZhihuFeed(params, callback) {
         const back = funcCheck(callback);

@@ -46,7 +46,7 @@ export default class Spider {
         if (process.env.NODE_ENV === 'production') {
             return 2 * 60 * 1000 * base;
         } else {
-            return 2 * 1000 * base;
+            return 1000 * base;
         }
     }
 

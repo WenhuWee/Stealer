@@ -19,7 +19,9 @@ export default class StoreManager {
     }
 
     init() {
-        // this._clearDB();
+        if (process.env.NODE_ENV !== 'production') {
+            // this._clearDB();
+        }
 
         const appPath = Path.resolve('./');
         const dirPath = Path.join(appPath, 'data');
@@ -38,12 +40,21 @@ export default class StoreManager {
         });
     }
 
+    getAllDocs(callback) {
+        if (!callback) {
+            return;
+        }
+        this.db.find({}).projection({ url: 1 }).exec((err, docs) => {
+            callback(docs);
+        });
+    }
+
     getAllURL(callback) {
         if (!callback) {
             return;
         }
         const urls = [];
-        this.db.find({}).projection({ url: 1 }).exec((err, docs) => {
+        this.db.find({ }).projection({ url: 1 }).exec((err, docs) => {
             if (!err) {
                 docs.forEach((ele) => {
                     if (ele.url) {
@@ -57,13 +68,18 @@ export default class StoreManager {
 
     setRSSSource(url, xml) {
         if (url && xml && this.db) {
-            this.db.find({ url }, (err, docs) => {
+            this.db.find({ _id: url }, (err, docs) => {
                 if (docs.length) {
-                    this.db.update({ url }, { xml }, {}, (updateErr) => {
+                    this.db.update({ _id: url }, { url, xml }, {}, (updateErr, updateNewDocs) => {
+                        if (updateNewDocs) {
+
+                        }
                     });
                 } else {
-                    this.db.insert({ url, xml }, (insertErr) => {
-                        // console.log(newDocs);
+                    this.db.insert({ _id: url, url, xml }, (insertErr, insertNewDocs) => {
+                        if (insertNewDocs) {
+
+                        }
                     });
                 }
             });
