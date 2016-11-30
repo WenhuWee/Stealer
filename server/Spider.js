@@ -1,8 +1,9 @@
 
 import URLManager from './URLManager.js';
 import ContentParser from './ContentParser.js';
-import { URLTask, ParseTask } from '../Model/CrawlTask.js';
-import { FeedObject, FeedItemObject } from '../Model/FeedObject.js';
+import StoreManager from './StoreManager.js';
+import { TimingCrawlTask } from '../Model/CrawlTask.js';
+import { FeedObject } from '../Model/FeedObject.js';
 
 const Url = require('url');
 const FS = require('fs');
@@ -16,6 +17,18 @@ export default class Spider {
 
         this.errorURL = {};
 
+        this.crawlTimers = {};
+
+        StoreManager.instance().getAllURL((urls) => {
+            if (Array.isArray(urls) && urls.length) {
+                urls.forEach((ele, index) => {
+                    setTimeout((url) => {
+                        this.startTimerWithUrl(url);
+                    }, 2 * 1000 * index, ele);
+                });
+            }
+        });
+
         const appPath = Path.resolve('./');
         this.logPath = Path.join(appPath, 'log');
         try {
@@ -26,6 +39,23 @@ export default class Spider {
             } catch (e) {
                 throw Error('Can not Find "./log" Dir');
             }
+        }
+    }
+
+    startTimerWithUrl(url) {
+        if (url && !this.crawlTimers[url]) {
+            const timer = new TimingCrawlTask(url, 8);
+            this.crawlTimers[url] = timer;
+            timer.start((crawlUrl) => {
+                this.crawlUrl(crawlUrl, (feed) => {
+                    if (feed) {
+                        const xml = feed.generateRSSXML();
+                        if (xml) {
+                            StoreManager.instance().setRSSSource(crawlUrl, xml);
+                        }
+                    }
+                });
+            });
         }
     }
 

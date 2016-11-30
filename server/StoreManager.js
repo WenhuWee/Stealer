@@ -26,6 +26,21 @@ export default class StoreManager {
         // this._initTestData();
     }
 
+    getAllURL(callback) {
+        if (!callback) {
+            return;
+        }
+        const urls = [];
+        this.db.find({}).projection({ url: 1 }).exec((err, docs) => {
+            if (!err) {
+                docs.forEach((ele) => {
+                    urls.push(ele.url);
+                });
+            }
+            callback(urls);
+        });
+    }
+
     setRSSSource(url, xml) {
         if (url && xml && this.db) {
             this.db.insert({ url, xml }, (err, newDocs) => {

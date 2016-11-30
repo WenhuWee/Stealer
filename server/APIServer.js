@@ -150,6 +150,7 @@ export default class APIServer {
                             back(null, error);
                         } else if (res) {
                             StoreManager.instance().setRSSSource(url, res);
+                            this.spider.startTimerWithUrl(url);
                             back(res, null);
                         } else {
                             back(null, Error('unknown'));

@@ -1,6 +1,33 @@
 
 import { FeedObject, FeedItemObject } from './FeedObject.js';
 
+export class TimingCrawlTask {
+    url:string;
+    interval:number;
+    timer;
+
+    constructor(url, interval) {
+        this.url = url;
+        this.interval = interval * 1000;
+    }
+
+    start(callback) {
+        if (!callback) {
+            return;
+        }
+        this.timer = setInterval(() => {
+            callback(this.url);
+        }, this.interval);
+    }
+
+    stop() {
+        if (this.timer) {
+            clearInterval(this.timer);
+            this.timer = null;
+        }
+    }
+}
+
 export class URLTask {
     url:string;
     header:string;
