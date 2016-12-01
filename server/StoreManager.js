@@ -20,7 +20,7 @@ export default class StoreManager {
 
     init() {
         if (process.env.NODE_ENV !== 'production') {
-            // this._clearDB();
+            this._clearDB();
         }
 
         const appPath = Path.resolve('./');

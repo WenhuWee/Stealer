@@ -80,7 +80,7 @@ export class FeedObject {
 
             feed.addItem({
                 title: ele.title,
-                id: ele.id,
+                id: ele.date.getTime(),
                 link: ele.link,
                 date: ele.date,
                 content: ele.content,
