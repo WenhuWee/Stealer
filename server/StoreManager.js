@@ -88,7 +88,7 @@ export default class StoreManager {
 
     getRSSXML(url, callback) {
         if (url && callback && this.db) {
-            this.db.find({ url }, (err, docs) => {
+            this.db.find({ _id: url }, (err, docs) => {
                 if (docs.length) {
                     const item = docs[0];
                     const xml = item.xml;

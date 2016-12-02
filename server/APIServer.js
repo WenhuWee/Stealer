@@ -168,12 +168,14 @@ export default class APIServer {
         if (url) {
             StoreManager.instance().getRSSXML(url, (xml) => {
                 if (xml) {
-                    back(xml);
+                    devLog('From DB');
+                    back(xml, null);
                 } else {
                     this.generateZhihuFeed(params, (res, error) => {
                         if (error) {
                             back(null, error);
                         } else if (res) {
+                            devLog('From Real Time');
                             StoreManager.instance().setRSSSource(url, res);
                             this.spider.startTimerWithUrl(url);
                             back(res, null);
@@ -224,12 +226,14 @@ export default class APIServer {
             const url = `http://weixin.sogou.com/weixin?type=1&query=${name}`;
             StoreManager.instance().getRSSXML(url, (xml) => {
                 if (xml) {
+                    devLog('From DB');
                     back(xml);
                 } else {
                     this.generateWeixinFeed(params, (res, error) => {
                         if (error) {
                             back(null, error);
                         } else if (res) {
+                            devLog('From Real Time');
                             StoreManager.instance().setRSSSource(url, res);
                             this.spider.startTimerWithUrl(url);
                             back(res, null);
