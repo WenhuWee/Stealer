@@ -1,5 +1,6 @@
 
-import { funcCheck, safeJSONParse } from '../utils/misc.js';
+import { funcCheck, safeJSONParse } from '../utils/misc';
+import { FeedStoreModel } from '../model/FeedStoreModel';
 
 const Path = require('path');
 const Nedb = require('nedb');
@@ -20,7 +21,7 @@ export default class StoreManager {
 
     init() {
         if (process.env.NODE_ENV !== 'production') {
-            // this._clearDB();
+            this._clearDB();
         }
 
         const appPath = Path.resolve('./');
@@ -66,17 +67,19 @@ export default class StoreManager {
         });
     }
 
-    setRSSSource(url, xml) {
-        if (url && xml && this.db) {
-            this.db.find({ _id: url }, (err, docs) => {
+    setRSSSource(source:FeedStoreModel) {
+        if (source instanceof FeedStoreModel && source.isValid()) {
+            this.db.find({ _id: source.id }, (err, docs) => {
                 if (docs.length) {
-                    this.db.update({ _id: url }, { url, xml }, {}, (updateErr, updateNewDocs) => {
+                    const updateRes = source.generateStoreObjectWithoutID();
+                    this.db.update({ _id: source.id }, updateRes, {}, (updateErr, updateNewDocs) => {
                         if (updateNewDocs) {
 
                         }
                     });
                 } else {
-                    this.db.insert({ _id: url, url, xml }, (insertErr, insertNewDocs) => {
+                    const insertRes = source.generateStoreObjectWithID();
+                    this.db.insert(insertRes, (insertErr, insertNewDocs) => {
                         if (insertNewDocs) {
 
                         }
@@ -86,13 +89,13 @@ export default class StoreManager {
         }
     }
 
-    getRSSXML(url, callback) {
+    getRSSSource(url, callback) {
         if (url && callback && this.db) {
             this.db.find({ _id: url }, (err, docs) => {
                 if (docs.length) {
                     const item = docs[0];
-                    const xml = item.xml;
-                    callback(xml);
+                    const feedModel = new FeedStoreModel(item);
+                    callback(feedModel);
                 } else {
                     callback(null);
                 }

@@ -5,9 +5,12 @@ import StoreManager from './StoreManager.js';
 import { TimingCrawlTask } from '../Model/CrawlTask.js';
 import { FeedObject } from '../Model/FeedObject.js';
 import { devLog } from '../utils/misc.js';
+import { FeedStoreModel } from '../model/FeedStoreModel';
 
 const FS = require('fs');
 const Path = require('path');
+
+const firstTry = true;
 
 export default class Spider {
     constructor() {
@@ -72,7 +75,12 @@ export default class Spider {
                     if (feed) {
                         const xml = feed.generateRSSXML();
                         if (xml) {
-                            StoreManager.instance().setRSSSource(crawlUrl, xml);
+                            const feedModel = new FeedStoreModel();
+                            feedModel.id = crawlUrl;
+                            feedModel.url = crawlUrl;
+                            feedModel.xml = xml;
+
+                            StoreManager.instance().setRSSSource(feedModel);
                         }
                     }
                 });
@@ -85,7 +93,14 @@ export default class Spider {
         this.crawlURLTasks(urlTasks, callback);
     }
 
+
     crawlURLTasks(tasks, callback, prevFeed = null) {
+        // if (firstTry) {
+        //     firstTry = false;
+        //     callback(null, Error('random error'));
+        //     return;
+        // }
+
         this.URLManager.insertURLTasks(tasks, (parseTasks, error) => {
             if (error) {
                 this.logWithTasks(parseTasks);

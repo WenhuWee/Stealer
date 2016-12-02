@@ -1,8 +1,9 @@
 
 
-import StoreManager from './StoreManager.js';
-import { funcCheck, safeJSONParse, devLog } from '../utils/misc.js';
-import Spider from './Spider.js';
+import StoreManager from './StoreManager';
+import { funcCheck, safeJSONParse, devLog } from '../utils/misc';
+import Spider from './Spider';
+import { FeedStoreModel } from '../model/FeedStoreModel';
 
 const Url = require('url');
 const Zlib = require('zlib');
@@ -29,7 +30,7 @@ export default class APIServer {
         this.lackErrorResponse = {
             success: false,
             error: {
-                msg: '缺少必要参数',
+                message: '缺少必要参数',
             },
         };
 
@@ -38,6 +39,13 @@ export default class APIServer {
         // this// this.generateZhihuFeed({ url: 'https://zhuanlan.zhihu.com/spatialeconomics' }, (res) => {
         //     console.log(res);
         // });
+    }
+
+    commonErrorWithMsg(msg) {
+        return { success: false,
+            error: {
+                message: msg,
+            } };
     }
 
     matchAPIPattern(path:string, query:Object) {
@@ -161,39 +169,80 @@ export default class APIServer {
         });
     }
 
+    getFeed(url, generateFunc, callback) {
+        if (typeof callback !== 'function') {
+            return;
+        }
+        if (!url || typeof generateFunc !== 'function') {
+            callback(null, null);
+        }
+        StoreManager.instance().getRSSSource(url, (feedObj) => {
+
+            // TODO:有点乱，以后改吧
+            const currentDate = new Date();
+            let generateInterval = 60 * 15 * 1000;
+            if (process.env.NODE_ENV !== 'production') {
+                generateInterval = 10 * 1000;
+            }
+            if (feedObj && feedObj.xml) {
+                // from db
+                devLog('From DB');
+                callback(feedObj.xml, null);
+            } else if (!feedObj || (feedObj.errTime && currentDate - feedObj.errTime > generateInterval)) {
+                // generate
+                const feedSource = new FeedStoreModel();
+                feedSource.id = url;
+                feedSource.url = url;
+
+                generateFunc(url, (res, error) => {
+                    if (res) {
+                        devLog('From Real Time');
+                        feedSource.xml = res;
+                        StoreManager.instance().setRSSSource(feedSource);
+                        this.spider.startTimerWithUrl(url);
+                        callback(res, null);
+                    } else if (error) {
+                        feedSource.errTime = new Date();
+                        feedSource.errMsg = error.error.message;
+                        StoreManager.instance().setRSSSource(feedSource);
+                        devLog('insert error');
+                        devLog(feedSource);
+                        callback(null, error);
+                    } else {
+                        callback(null, this.commonErrorWithMsg('unknown'));
+                    }
+                });
+            } else {
+                // error
+                callback(null, this.commonErrorWithMsg('unknown'));
+            }
+        });
+    }
+
     getZhihuFeed(params, callback) {
         const back = funcCheck(callback);
         let url = params.url;
         url = decodeURIComponent(url);
         if (url) {
-            StoreManager.instance().getRSSXML(url, (xml) => {
-                if (xml) {
-                    devLog('From DB');
-                    back(xml, null);
-                } else {
-                    this.generateZhihuFeed(params, (res, error) => {
-                        if (error) {
-                            back(null, error);
-                        } else if (res) {
-                            devLog('From Real Time');
-                            StoreManager.instance().setRSSSource(url, res);
-                            this.spider.startTimerWithUrl(url);
-                            back(res, null);
-                        } else {
-                            back(null, Error('unknown'));
-                        }
-                    });
-                }
-            });
+            this.getFeed(url, this.generateZhihuFeed.bind(this), back);
         } else {
-            back(null, Error('bad url'));
+            back(null, this.commonErrorWithMsg('bad url'));
         }
     }
 
-    generateZhihuFeed(params, callback) {
+    getWeixinFeed(params, callback) {
         const back = funcCheck(callback);
-        let url = params.url;
-        url = decodeURIComponent(url);
+        const name = params.name;
+        if (name) {
+            const url = `http://weixin.sogou.com/weixin?type=1&query=${name}`;
+            this.getFeed(url, this.generateWeixinFeed.bind(this), back);
+        } else {
+            back(null, this.commonErrorWithMsg('bad url'));
+        }
+    }
+
+    generateZhihuFeed(url, callback) {
+        const back = funcCheck(callback);
         if (url) {
             const urlObject = Url.parse(url);
             if (urlObject.host === 'zhuanlan.zhihu.com') {
@@ -201,11 +250,7 @@ export default class APIServer {
                     let data = null;
                     let error = null;
                     if (err) {
-                        error = Object.assign({
-                            error: {
-                                msg: err.message,
-                            },
-                        }, this.commonErrorResponse);
+                        error = this.commonErrorWithMsg(err.message);
                     } else if (feed) {
                         data = feed.generateRSSXML();
                     }
@@ -219,62 +264,20 @@ export default class APIServer {
         }
     }
 
-    getWeixinFeed(params, callback) {
-        const back = funcCheck(callback);
-        const name = params.name;
-        if (name) {
-            const url = `http://weixin.sogou.com/weixin?type=1&query=${name}`;
-            StoreManager.instance().getRSSXML(url, (xml) => {
-                if (xml) {
-                    devLog('From DB');
-                    back(xml);
-                } else {
-                    this.generateWeixinFeed(params, (res, error) => {
-                        if (error) {
-                            back(null, error);
-                        } else if (res) {
-                            devLog('From Real Time');
-                            StoreManager.instance().setRSSSource(url, res);
-                            this.spider.startTimerWithUrl(url);
-                            back(res, null);
-                        } else {
-                            back(null, Error('unknown'));
-                        }
-                    });
-                }
-            });
-        } else {
-            back(null, Error('bad url'));
-        }
-    }
 
-    generateWeixinFeed(params, callback) {
+    generateWeixinFeed(url, callback) {
         const back = funcCheck(callback);
-        const name = params.name;
-        const generateErrorData = (err) => {
-            let data = {};
-            if (err) {
-                data = Object.assign({
-                    error: {
-                        msg: err.message,
-                    },
-                }, this.commonErrorResponse);
-            }
-            return data;
-        };
-
-        if (name) {
-            const url = `http://weixin.sogou.com/weixin?type=1&query=${name}`;
+        if (url) {
             // sougou搜索
             this.spider.crawlUrl(url, (feedObject, err) => {
                 let data = null;
                 let error = null;
                 if (err) {
-                    error = generateErrorData(err);
+                    error = this.commonErrorWithMsg(err.message);
                 } else {
                     data = feedObject.generateRSSXML();
                     if (!data) {
-                        error = generateErrorData(err);
+                        error = this.commonErrorWithMsg(err.message);
                     }
                 }
                 back(data, error);
