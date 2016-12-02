@@ -214,7 +214,7 @@ export default class APIServer {
                 });
             } else {
                 // error
-                callback(null, this.commonErrorWithMsg('unknown'));
+                callback(null, this.commonErrorWithMsg('too frequent!'));
             }
         });
     }
