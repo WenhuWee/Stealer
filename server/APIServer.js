@@ -207,6 +207,7 @@ export default class APIServer {
                         StoreManager.instance().setRSSSource(feedSource);
                         devLog('insert error');
                         devLog(feedSource);
+                        devLog(error);
                         callback(null, error);
                     } else {
                         callback(null, this.commonErrorWithMsg('unknown'));
