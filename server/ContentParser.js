@@ -145,7 +145,11 @@ export default class ContentParser {
             id = params.query;
         }
 
-        const urlTasks = URLManager.urlTasksFromURL(url);
+        let urlTasks = [];
+        utils.devLog(`sougou:${url}`);
+        if (url) {
+            urlTasks = URLManager.urlTasksFromURL(url);
+        }
 
         const parseTask = task.copy();
         parseTask.feed = new FeedObject();
