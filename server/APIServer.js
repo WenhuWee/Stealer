@@ -278,7 +278,7 @@ export default class APIServer {
                 } else {
                     data = feedObject.generateRSSXML();
                     if (!data) {
-                        error = this.commonErrorWithMsg(err.message);
+                        error = this.commonErrorWithMsg('generate failed');
                     }
                 }
                 back(data, error);

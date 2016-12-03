@@ -86,7 +86,10 @@ export default class ContentParser {
                             let src = $(img).attr('src');
                             const urlObject = Url.parse(src);
                             if (!urlObject.host) {
-                                src = `http://pic3.zhimg.com/${src}_b.jpg`;
+                                src = `http://pic3.zhimg.com/${src}`;
+                                if (!src.endsWith('png') && !src.endsWith('jpg')) {
+                                    src = `${src}_b.jpg`;
+                                }
                                 $(img).attr('src', src);
                             }
                         });
