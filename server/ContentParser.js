@@ -214,8 +214,7 @@ export default class ContentParser {
                                 feedItem.authorName = ele.app_msg_ext_info.author;
                                 feedItem.title = ele.app_msg_ext_info.title;
                                 feedItem.date = new Date(ele.comm_msg_info.datetime * 1000);
-                                const idString = ele.comm_msg_info.datetime + feedItem.title;
-                                feedItem.id = utils.MD5(idString);
+
                                 if (ele.app_msg_ext_info.content_url) {
                                     const decodeURL = ele.app_msg_ext_info.content_url.replace(/&amp;/g, '&');
                                     const msgurl = `http://mp.weixin.qq.com${decodeURL}`;
@@ -223,6 +222,7 @@ export default class ContentParser {
                                     urlTasks = urlTasks.concat(urlTask);
 
                                     feedItem.link = msgurl;
+                                    feedItem.id = msgurl;
                                 }
                                 parseTask.feed.addItem(feedItem);
                             });

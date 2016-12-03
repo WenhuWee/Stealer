@@ -45,7 +45,7 @@ export default class StoreManager {
         if (!callback) {
             return;
         }
-        this.db.find({}).projection({ url: 1 }).exec((err, docs) => {
+        this.db.find({}, (err, docs) => {
             callback(docs);
         });
     }

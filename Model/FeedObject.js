@@ -78,9 +78,12 @@ export class FeedObject {
                 feedUpdatedTime = ele.date;
             }
 
+            const idString = ele.date.getTime() + ele.title;
+            const itemid = utils.MD5(idString);
+
             feed.addItem({
                 title: ele.title,
-                id: ele.id,
+                id: itemid,
                 link: ele.link,
                 date: ele.date,
                 content: ele.content,

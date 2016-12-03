@@ -157,13 +157,27 @@ export default class APIServer {
         keys.forEach((key) => {
             const timer = {};
             timer.url = this.spider.crawlTimers[key].url;
-            timer.interval = this.spider.crawlTimers[key].interval;
+            const time = this.spider.crawlTimers[key].interval / (1000 * 60);
+            timer.interval = `${time.toFixed(1)}min`;
             timers.push(timer);
         });
         res.timers = timers;
         StoreManager.instance().getAllDocs((docs) => {
             if (Array.isArray(docs)) {
-                res.dbUrls = docs;
+                res.dbDocs = [];
+                docs.forEach((ele) => {
+                    const doc = {};
+                    if (ele.url) {
+                        doc.url = ele.url;
+                    }
+                    if (ele.errMsg) {
+                        doc.errMsg = ele.errMsg;
+                    }
+                    if (ele.errTime) {
+                        doc.errTime = ele.errTime;
+                    }
+                    res.dbDocs.push(doc);
+                });
             }
             callback(null, res);
         });
