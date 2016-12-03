@@ -187,12 +187,12 @@ export default class APIServer {
         });
     }
 
-    getFeed(url, generateFunc, callback) {
+    getFeed(url, callback) {
         if (typeof callback !== 'function') {
             return;
         }
-        if (!url || typeof generateFunc !== 'function') {
-            callback(null, null);
+        if (!url) {
+            callback(this.lackErrorResponse);
         }
         StoreManager.instance().getRSSSource(url, (feedObj) => {
 
@@ -208,27 +208,12 @@ export default class APIServer {
                 callback({ xml: feedObj.xml });
             } else if (!feedObj || (feedObj.errTime && currentDate - feedObj.errTime > generateInterval)) {
                 // generate
-                const feedSource = new FeedStoreModel();
-                feedSource.id = url;
-                feedSource.url = url;
 
-                generateFunc(url, (res, error) => {
+                this.generateFeed(url, (res, error) => {
                     if (res) {
-                        devLog('From Real Time');
-                        feedSource.xml = res;
-                        StoreManager.instance().setRSSSource(feedSource);
-                        this.spider.startTimerWithUrl(url);
                         callback({ xml: res });
-                    } else if (error) {
-                        feedSource.errTime = new Date();
-                        feedSource.errMsg = error.error.message;
-                        StoreManager.instance().setRSSSource(feedSource);
-                        devLog('insert error');
-                        devLog(feedSource);
-                        devLog(error);
-                        callback(error);
                     } else {
-                        callback(this.commonErrorWithMsg('unknown'));
+                        callback(error);
                     }
                 });
             } else {
@@ -242,8 +227,19 @@ export default class APIServer {
         const back = funcCheck(callback);
         let url = params.url;
         url = decodeURIComponent(url);
+        const isForced = params.forced;
         if (url) {
-            this.getFeed(url, this.generateZhihuFeed.bind(this), back);
+            if (isForced) {
+                this.generateFeed(url, (res, error) => {
+                    if (res) {
+                        callback({ xml: res });
+                    } else {
+                        callback(error);
+                    }
+                });
+            } else {
+                this.getFeed(url, back);
+            }
         } else {
             back(this.commonErrorWithMsg('bad url'));
         }
@@ -252,66 +248,63 @@ export default class APIServer {
     getWeixinFeed(params, callback) {
         const back = funcCheck(callback);
         const name = params.name;
+        const isForced = params.forced;
         if (name) {
             const url = `http://weixin.sogou.com/weixin?type=1&query=${name}`;
-            this.getFeed(url, this.generateWeixinFeed.bind(this), back);
+            if (isForced) {
+                this.generateFeed(url, (res, error) => {
+                    if (res) {
+                        callback({ xml: res });
+                    } else {
+                        callback(error);
+                    }
+                });
+            } else {
+                this.getFeed(url, back);
+            }
         } else {
             back(this.commonErrorWithMsg('bad url'));
         }
     }
 
-    generateZhihuFeed(url, callback) {
+    generateFeed(url, callback) {
         const back = funcCheck(callback);
         if (url) {
-            const urlObject = Url.parse(url);
-            if (urlObject.host === 'zhuanlan.zhihu.com') {
-                this.spider.crawlUrl(url, (feed, err) => {
-                    let data = null;
-                    let error = null;
-                    if (err) {
-                        error = this.commonErrorWithMsg(err.message);
-                    } else if (feed) {
-                        data = feed.generateRSSXML();
-                        if (!data) {
-                            error = this.commonErrorWithMsg('generate failed');
-                        }
-                    }
-                    if (error) {
-                        back(error);
-                    } else {
-                        back(data);
-                    }
-                });
-            } else {
-                back(this.lackErrorResponse);
-            }
-        } else {
-            back(this.lackErrorResponse);
-        }
-    }
-
-
-    generateWeixinFeed(url, callback) {
-        const back = funcCheck(callback);
-        if (url) {
-            // sougou搜索
-            this.spider.crawlUrl(url, (feedObject, err) => {
+            this.spider.crawlUrl(url, (feed, err) => {
                 let data = null;
                 let error = null;
                 if (err) {
                     error = this.commonErrorWithMsg(err.message);
-                } else {
-                    data = feedObject.generateRSSXML();
+                } else if (feed) {
+                    data = feed.generateRSSXML();
                     if (!data) {
                         error = this.commonErrorWithMsg('generate failed');
                     }
                 }
-                if (error) {
-                    back(error);
+
+                const feedSource = new FeedStoreModel();
+                feedSource.id = url;
+                feedSource.url = url;
+                if (data) {
+                    devLog('From Real Time');
+                    feedSource.xml = data;
+                    StoreManager.instance().setRSSSource(feedSource);
+                    this.spider.startTimerWithUrl(url);
+                    callback(data, null);
+                } else if (error) {
+                    feedSource.errTime = new Date();
+                    feedSource.errMsg = error.error.message;
+                    StoreManager.instance().setRSSSource(feedSource);
+                    devLog('insert error');
+                    devLog(feedSource);
+                    devLog(error);
+                    callback(null, error);
                 } else {
-                    back(data);
+                    callback(null, this.commonErrorWithMsg('unknown'));
                 }
             });
+        } else {
+            back(null, this.lackErrorResponse);
         }
     }
 
