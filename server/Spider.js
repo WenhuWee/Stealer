@@ -125,7 +125,7 @@ export default class Spider {
                         if (mergedFeed2.items && mergedFeed2.items.size) {
                             callback(mergedFeed2, null);
                         } else {
-                            callback(null, Error('Unkonw'));
+                            callback(null, Error('no article'));
                         }
                     } else {
                         callback(prevFeed, null);

@@ -19,6 +19,10 @@ export default class APIServer {
             info: {
                 status: this.getCurrentStatus,
             },
+            del: {
+                zhihu: this.delZhihuFeed,
+                weixin: this.delWeixinFeed,
+            },
         };
 
         this.commonErrorResponse = {
@@ -128,18 +132,18 @@ export default class APIServer {
                 params = {};
             }
             devLog(params);
-            apiFunction(params, (response, error) => {
-                devLog(error);
-                let newRes;
-                if (error) {
-                    newRes = JSON.stringify(error);
-                    res.writeHead(200, {
-                        'Content-Type': 'application/json; charset=UTF-8',
-                    });
-                } else {
-                    newRes = response;
+            apiFunction(params, (response) => {
+                let newRes = '';
+                if (response.xml) {
+                    newRes = response.xml;
                     res.writeHead(200, {
                         'Content-Type': 'text/xml; charset=UTF-8',
+                    });
+                } else {
+                    devLog(response);
+                    newRes = JSON.stringify(response);
+                    res.writeHead(200, {
+                        'Content-Type': 'application/json; charset=UTF-8',
                     });
                 }
                 res.end(newRes);
@@ -179,7 +183,7 @@ export default class APIServer {
                     res.dbDocs.push(doc);
                 });
             }
-            callback(null, res);
+            callback(res);
         });
     }
 
@@ -201,7 +205,7 @@ export default class APIServer {
             if (feedObj && feedObj.xml) {
                 // from db
                 devLog('From DB');
-                callback(feedObj.xml, null);
+                callback({ xml: feedObj.xml });
             } else if (!feedObj || (feedObj.errTime && currentDate - feedObj.errTime > generateInterval)) {
                 // generate
                 const feedSource = new FeedStoreModel();
@@ -214,7 +218,7 @@ export default class APIServer {
                         feedSource.xml = res;
                         StoreManager.instance().setRSSSource(feedSource);
                         this.spider.startTimerWithUrl(url);
-                        callback(res, null);
+                        callback({ xml: res });
                     } else if (error) {
                         feedSource.errTime = new Date();
                         feedSource.errMsg = error.error.message;
@@ -222,14 +226,14 @@ export default class APIServer {
                         devLog('insert error');
                         devLog(feedSource);
                         devLog(error);
-                        callback(null, error);
+                        callback(error);
                     } else {
-                        callback(null, this.commonErrorWithMsg('unknown'));
+                        callback(this.commonErrorWithMsg('unknown'));
                     }
                 });
             } else {
                 // error
-                callback(null, this.commonErrorWithMsg('too frequent!'));
+                callback(this.commonErrorWithMsg('too frequent!'));
             }
         });
     }
@@ -241,7 +245,7 @@ export default class APIServer {
         if (url) {
             this.getFeed(url, this.generateZhihuFeed.bind(this), back);
         } else {
-            back(null, this.commonErrorWithMsg('bad url'));
+            back(this.commonErrorWithMsg('bad url'));
         }
     }
 
@@ -252,7 +256,7 @@ export default class APIServer {
             const url = `http://weixin.sogou.com/weixin?type=1&query=${name}`;
             this.getFeed(url, this.generateWeixinFeed.bind(this), back);
         } else {
-            back(null, this.commonErrorWithMsg('bad url'));
+            back(this.commonErrorWithMsg('bad url'));
         }
     }
 
@@ -268,14 +272,21 @@ export default class APIServer {
                         error = this.commonErrorWithMsg(err.message);
                     } else if (feed) {
                         data = feed.generateRSSXML();
+                        if (!data) {
+                            error = this.commonErrorWithMsg('generate failed');
+                        }
                     }
-                    back(data, error);
+                    if (error) {
+                        back(error);
+                    } else {
+                        back(data);
+                    }
                 });
             } else {
-                back(null, this.lackErrorResponse);
+                back(this.lackErrorResponse);
             }
         } else {
-            back(null, this.lackErrorResponse);
+            back(this.lackErrorResponse);
         }
     }
 
@@ -295,8 +306,52 @@ export default class APIServer {
                         error = this.commonErrorWithMsg('generate failed');
                     }
                 }
-                back(data, error);
+                if (error) {
+                    back(error);
+                } else {
+                    back(data);
+                }
             });
+        }
+    }
+
+// DEL
+
+    delZhihuFeed(params, callback) {
+        const back = funcCheck(callback);
+        let url = params.url;
+        url = decodeURIComponent(url);
+        if (url) {
+            this.delFeed(url, back);
+        } else {
+            back(this.commonErrorWithMsg('bad url'));
+        }
+    }
+
+    delWeixinFeed(params, callback) {
+        const back = funcCheck(callback);
+        const name = params.name;
+        if (name) {
+            const url = `http://weixin.sogou.com/weixin?type=1&query=${name}`;
+            this.delFeed(url, back);
+        } else {
+            back(this.commonErrorWithMsg('bad url'));
+        }
+    }
+
+    delFeed(url, callback) {
+        const back = funcCheck(callback);
+        if (url) {
+            StoreManager.instance().delRSSSource(url, (err) => {
+                if (!err) {
+                    this.spider.stopTimerWithUrl(url);
+                    callback(this.commonSuccessResponse);
+                } else {
+                    callback(this.commonErrorResponse);
+                }
+            });
+        } else {
+            back(this.commonErrorWithMsg('bad url'));
         }
     }
 }

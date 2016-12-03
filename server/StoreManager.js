@@ -67,6 +67,16 @@ export default class StoreManager {
         });
     }
 
+    delRSSSource(url:string, callback) {
+        if (!url || !callback) {
+            return;
+        }
+
+        this.db.remove({ _id: url }, {}, (err) => {
+            callback(err);
+        });
+    }
+
     setRSSSource(source:FeedStoreModel) {
         if (source instanceof FeedStoreModel && source.isValid()) {
             this.db.find({ _id: source.id }, (err, docs) => {
