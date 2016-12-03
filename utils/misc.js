@@ -94,3 +94,14 @@ export function devLog(...params) {
         console.log(...params);
     }
 }
+
+
+const crypto = require('crypto');
+
+export function MD5(string) {
+    if (string) {
+        const md5sum = crypto.createHash('md5');
+        return md5sum.update(string).digest('hex');
+    }
+    return '';
+}
