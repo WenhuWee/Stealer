@@ -4,6 +4,7 @@ import { FeedObject, FeedItemObject } from './FeedObject.js';
 export class TimingCrawlTask {
     url:string;
     interval:number;
+    nextTiming:Date;
     timer;
 
     constructor(url, interval) {
@@ -19,7 +20,12 @@ export class TimingCrawlTask {
         if (!callback) {
             return;
         }
+        const currentDate = new Date();
+        this.nextTiming = new Date(currentDate.getTime() + this.interval);
+
         this.timer = setInterval(() => {
+            const currentDate2 = new Date();
+            this.nextTiming = new Date(currentDate2.getTime() + this.interval);
             callback(this.url);
         }, this.interval);
     }
@@ -29,6 +35,7 @@ export class TimingCrawlTask {
             clearInterval(this.timer);
             this.timer = null;
         }
+        this.nextTiming = null;
     }
 }
 

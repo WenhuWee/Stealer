@@ -5,6 +5,7 @@ export class FeedStoreModel {
     xml: string;
     errMsg:string;
     errTime:Date;
+    createdTime:Date;
 
     constructor(obj) {
         if (typeof obj === 'object') {
@@ -16,6 +17,7 @@ export class FeedStoreModel {
                 this.errTime = obj.errTime;
             }
         }
+        this.createdTime = new Date();
     }
 
     isValid() {
@@ -29,6 +31,7 @@ export class FeedStoreModel {
             storeObj.xml = this.xml;
             storeObj.errMsg = this.errMsg;
             storeObj.errTime = this.errTime;
+            storeObj.createdTime = this.createdTime;
             return storeObj;
         } else {
             return null;
@@ -42,6 +45,7 @@ export class FeedStoreModel {
             storeObj.xml = this.xml;
             storeObj.errMsg = this.errMsg;
             storeObj.errTime = this.errTime;
+            storeObj.createdTime = this.createdTime;
             return storeObj;
         } else {
             return null;

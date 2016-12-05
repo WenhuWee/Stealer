@@ -160,9 +160,11 @@ export default class APIServer {
         const keys = Object.keys(this.spider.crawlTimers);
         keys.forEach((key) => {
             const timer = {};
-            timer.url = this.spider.crawlTimers[key].url;
-            const time = this.spider.crawlTimers[key].interval / (1000 * 60);
+            const crawlTimer = this.spider.crawlTimers[key];
+            timer.url = crawlTimer.url;
+            const time = crawlTimer.interval / (1000 * 60);
             timer.interval = `${time.toFixed(1)}min`;
+            timer.next = crawlTimer.nextTiming.toLocaleString('en-US', { timeZone: 'Asia/Shanghai' });
             timers.push(timer);
         });
         res.timers = timers;
