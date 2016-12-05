@@ -90,9 +90,9 @@ export function validateEmail(email) {
 }
 
 export function devLog(...params) {
-    if (process.env.NODE_ENV !== 'production') {
-        console.log(...params);
-    }
+    // if (process.env.NODE_ENV !== 'production') {
+    console.log(...params);
+    // }
 }
 
 
