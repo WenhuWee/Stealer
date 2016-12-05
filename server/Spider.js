@@ -21,13 +21,18 @@ export default class Spider {
         this.errorURL = {};
 
         this.crawlTimers = {};
+        this.timeOutTimes = {};
 
         StoreManager.instance().getAllURL((urls) => {
             if (Array.isArray(urls) && urls.length) {
                 urls.forEach((ele, index) => {
-                    setTimeout((url) => {
+                    const timer = setTimeout((url) => {
                         this.startTimerWithUrl(url);
+                        if (this.timeOutTimes[url]) {
+                            delete this.timeOutTimes[url];
+                        }
                     }, this.getTimeOutTime(index), ele);
+                    this.timeOutTimes[ele] = timer;
                 });
             }
         });
@@ -59,6 +64,10 @@ export default class Spider {
             if (timer) {
                 timer.stop();
                 delete this.crawlTimers[url];
+            }
+            if (this.timeOutTimes[url]) {
+                clearTimeout(this.timeOutTimes[url]);
+                delete this.timeOutTimes[url];
             }
         }
     }
