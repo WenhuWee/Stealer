@@ -230,6 +230,8 @@ export default class ContentParser {
                     }
                 }
             }
+        } else {
+            devLog('No Script,Maybe Auth Code');
         }
         callback(urlTasks, parseTask, null);
     }
