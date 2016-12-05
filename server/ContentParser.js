@@ -225,6 +225,29 @@ export default class ContentParser {
                                     feedItem.id = msgurl;
                                 }
                                 parseTask.feed.addItem(feedItem);
+
+                                if (ele.app_msg_ext_info.multi_app_msg_item_list) {
+                                    const multiList = ele.app_msg_ext_info.multi_app_msg_item_list;
+                                    if (Array.isArray(multiList)) {
+                                        multiList.forEach((multiEle) => {
+                                            const multifeedItem = new FeedItemObject();
+                                            multifeedItem.authorName = multiEle.author;
+                                            multifeedItem.title = multiEle.title;
+                                            multifeedItem.date = new Date(ele.comm_msg_info.datetime * 1000);
+
+                                            if (multiEle.content_url) {
+                                                const decodeURL = multiEle.content_url.replace(/&amp;/g, '&');
+                                                const msgurl = `http://mp.weixin.qq.com${decodeURL}`;
+                                                const urlTask = URLManager.urlTasksFromURL(msgurl);
+                                                urlTasks = urlTasks.concat(urlTask);
+
+                                                multifeedItem.link = msgurl;
+                                                multifeedItem.id = msgurl;
+                                            }
+                                            parseTask.feed.addItem(multifeedItem);
+                                        });
+                                    }
+                                }
                             });
                         }
                     }
