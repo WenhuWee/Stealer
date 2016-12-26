@@ -97,7 +97,7 @@ export class FeedObject {
         feed.updated = feedUpdatedTime;
         let xml = null;
         try {
-            xml = feed.render('atom-1.0');
+            xml = feed.render('rss-2.0');
         } catch (e) {
             // console.log(e);
         }

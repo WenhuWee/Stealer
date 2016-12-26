@@ -52,7 +52,7 @@ export default class Spider {
 
     getTimeOutTime(base) {
         if (process.env.NODE_ENV === 'production') {
-            return 2 * 60 * 1000 * base;
+            return 2 * 60 * 1000 * base * Math.random() * 10;
         } else {
             return 1000 * base;
         }
