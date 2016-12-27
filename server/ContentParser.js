@@ -207,7 +207,10 @@ export default class ContentParser {
                     const msgs = text.substring(msgListStartIndex, msgListEndIndex);
                     if (msgs) {
                         const obj = utils.safeJSONParse(msgs);
-                        const msgList = obj.list;
+                        let msgList = null;
+                        if (obj) {
+                            msgList = obj.list;
+                        }
                         if (Array.isArray(msgList)) {
                             msgList.forEach((ele) => {
                                 const feedItem = new FeedItemObject();
