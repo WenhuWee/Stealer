@@ -15,6 +15,7 @@ export default class APIServer {
             feed: {
                 zhihu: this.getZhihuFeed,
                 weixin: this.getWeixinFeed,
+                chuansong: this.getChuansongFeed,
             },
             info: {
                 status: this.getCurrentStatus,
@@ -223,6 +224,28 @@ export default class APIServer {
                 callback(this.commonErrorWithMsg('too frequent!'));
             }
         });
+    }
+
+    getChuansongFeed(params, callback) {
+        const back = funcCheck(callback);
+        const name = params.name;
+        const isForced = params.forced;
+        if (name) {
+            const url = `http://chuansong.me/search?q=${name}`;
+            if (isForced) {
+                this.generateFeed(url, (res, error) => {
+                    if (res) {
+                        callback({ xml: res });
+                    } else {
+                        callback(error);
+                    }
+                });
+            } else {
+                this.getFeed(url, back);
+            }
+        } else {
+            back(this.commonErrorWithMsg('bad url'));
+        }
     }
 
     getZhihuFeed(params, callback) {

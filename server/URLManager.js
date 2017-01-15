@@ -110,8 +110,10 @@ export default class URLManager {
             headers: {
                 ...headers,
                 host: url.host,
+                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.12; rv:50.0) Gecko/20100101 Firefox/50.0',
             },
         };
+
 
         const parseTask = new ParseTask();
         parseTask.url = task.url;
@@ -193,6 +195,40 @@ function handleSogouWeixinUrl(url) {
     return tasks;
 }
 
+// chuansong
+function handleChuansongSearchUrl(url) {
+    const tasks = [];
+    if (url) {
+        const contentTask = new URLTask();
+        contentTask.url = url;
+        contentTask.type = 'chuansongSearch';
+        tasks.push(contentTask);
+    }
+    return tasks;
+}
+
+function handleChuansongProfileUrl(url) {
+    const tasks = [];
+    if (url) {
+        const contentTask = new URLTask();
+        contentTask.url = url;
+        contentTask.type = 'chuansongProfile';
+        tasks.push(contentTask);
+    }
+    return tasks;
+}
+
+function handleChuansongArticalUrl(url) {
+    const tasks = [];
+    if (url) {
+        const contentTask = new URLTask();
+        contentTask.url = url;
+        contentTask.type = 'chuansongArticle';
+        tasks.push(contentTask);
+    }
+    return tasks;
+}
+
 
 URLManager.urlHandler = {
     'zhuanlan.zhihu.com': {
@@ -207,21 +243,44 @@ URLManager.urlHandler = {
         '/profile': handleWinxinProfileUrl,
         '/s': handleWeixinArticleUrl,
     },
+    'chuansong.me': {
+        '/search': handleChuansongSearchUrl,
+        '/account': {
+            '/': handleChuansongProfileUrl,
+        },
+        '/n': {
+            '/': handleChuansongArticalUrl,
+        },
+    },
 };
 
 function getUrlHandler(url) {
     const urlObject = Url.parse(url);
     let handler = null;
     if (urlObject && urlObject.host) {
-        const handlerSet = URLManager.urlHandler[urlObject.host];
+        let handlerSet = URLManager.urlHandler[urlObject.host];
+
         if (handlerSet) {
             if (urlObject.pathname) {
                 handler = handlerSet[urlObject.pathname];
             }
             if (!handler) {
-                handler = handlerSet['/'];
+                const paths = urlObject.pathname.split('/');
+                paths.forEach((ele, index) => {
+                    if (index > 0 || handler) {
+                        const temp = handlerSet[`/${ele}`];
+                        if (typeof temp === 'function') {
+                            handler = temp;
+                        }
+                        if (!handler) {
+                            handler = handlerSet['/'];
+                        }
+                        handlerSet = handlerSet[`/${ele}`];
+                    }
+                });
             }
         }
+
     }
     return handler;
 }

@@ -22,16 +22,34 @@ export default class ContentParser {
                 '/profile': this.parseWeixinProfile,
                 '/s': this.parseWeixinArticle,
             },
+            'chuansong.me': {
+                '/search': this.parseChuansongSearch,
+                '/account': this.parseChuansongProfile,
+                '/n': this.parseChuansongArticle,
+            },
         };
     }
 
     distibuteParser(host, path) {
         let parser = null;
-        const parserSet = this.parserDistributor[host];
+        let parserSet = this.parserDistributor[host];
         if (parserSet) {
             parser = parserSet[path];
             if (!parser) {
                 parser = parserSet['/'];
+                const paths = path.split('/');
+                paths.forEach((ele, index) => {
+                    if (index > 0 || parser) {
+                        const temp = parserSet[`/${ele}`];
+                        if (typeof temp === 'function') {
+                            parser = temp;
+                        }
+                        if (!parser) {
+                            parser = parserSet['/'];
+                        }
+                        parserSet = parserSet[`/${ele}`];
+                    }
+                });
             }
         }
         if (!parser) {
@@ -260,5 +278,97 @@ export default class ContentParser {
             devLog('No Script,Maybe Auth Code');
         }
         callback(urlTasks, parseTask, null);
+    }
+
+    parseChuansongSearch(task, callback) {
+        const $ = Cheerio.load(task.content, {
+            normalizeWhitespace: true,
+        });
+
+        const feedBody = $('.feed_body');
+        const firstItem = feedBody.children().first();
+
+        const user = firstItem.find('a[class=user]');
+        const url = `http://chuansong.me${user.attr('href')}`;
+        const name = user.text();
+
+        const description = user.parent().next().text();
+        let id = '';
+
+        const taskUrlObject = Url.parse(task.url);
+        if (taskUrlObject) {
+            const params = QS.parse(taskUrlObject.query);
+            id = params.query;
+        }
+
+        let urlTasks = [];
+        utils.devLog(`chuansong:${url}`);
+        if (url) {
+            urlTasks = URLManager.urlTasksFromURL(url);
+        }
+
+        const parseTask = task.copy();
+        parseTask.feed = new FeedObject();
+        parseTask.feed.title = `公众号 - ${name}`;
+        parseTask.feed.description = description;
+        parseTask.feed.id = id;
+
+        callback(urlTasks, parseTask, null);
+    }
+
+    parseChuansongProfile(task, callback) {
+        const $ = Cheerio.load(task.content, {
+            normalizeWhitespace: true,
+        });
+
+        const parseTask = task.copy();
+        parseTask.feed = new FeedObject();
+        parseTask.feed.link = task.url;
+        let urlTasks = [];
+
+        utils.devLog(`chuansong:${task.url}`);
+
+        const feedBody = $('.feed_body');
+        feedBody.children().each((i, item) => {
+            if (i < 10) {
+                const feedItem = new FeedItemObject();
+                const article = $(item).find('a[class=question_link]');
+                feedItem.title = article.text();
+
+                const time = $(item).find('span[class=timestamp]').text();
+                feedItem.date = new Date(time);
+
+                const msgurl = `http://chuansong.me${article.attr('href')}`;
+                const urlTask = URLManager.urlTasksFromURL(msgurl);
+                urlTasks = urlTasks.concat(urlTask);
+
+                feedItem.link = msgurl;
+                feedItem.id = msgurl;
+
+                parseTask.feed.addItem(feedItem);
+            }
+        });
+
+        callback(urlTasks, parseTask, null);
+    }
+
+    parseChuansongArticle(task, callback) {
+        const $ = Cheerio.load(task.content, {
+            normalizeWhitespace: true,
+        });
+        console.log(task.content);
+        const content = $('#js_content');
+        // content.find('img').each((index, img) => {
+        //     const src = $(img).attr('data-src');
+        //     $(img).attr('src', src);
+        // });
+
+        const parseTask = task.copy();
+        parseTask.feed = new FeedObject();
+        const item = new FeedItemObject();
+        item.content = content.html();
+        item.id = task.url;
+        parseTask.feed.addItem(item);
+        callback([], parseTask, null);
     }
 }
