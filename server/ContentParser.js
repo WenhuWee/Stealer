@@ -330,7 +330,7 @@ export default class ContentParser {
 
         const feedBody = $('.feed_body');
         feedBody.children().each((i, item) => {
-            if (i < 10) {
+            if (i < 6) {
                 const feedItem = new FeedItemObject();
                 const article = $(item).find('a[class=question_link]');
                 feedItem.title = article.text();
@@ -356,7 +356,6 @@ export default class ContentParser {
         const $ = Cheerio.load(task.content, {
             normalizeWhitespace: true,
         });
-        console.log(task.content);
         const content = $('#js_content');
         // content.find('img').each((index, img) => {
         //     const src = $(img).attr('data-src');
