@@ -39,7 +39,7 @@ export default class ContentParser {
                 parser = parserSet['/'];
                 const paths = path.split('/');
                 paths.forEach((ele, index) => {
-                    if (index > 0 || parser) {
+                    if (index > 0 && !parser) {
                         const temp = parserSet[`/${ele}`];
                         if (typeof temp === 'function') {
                             parser = temp;

@@ -267,7 +267,7 @@ function getUrlHandler(url) {
             if (!handler) {
                 const paths = urlObject.pathname.split('/');
                 paths.forEach((ele, index) => {
-                    if (index > 0 || handler) {
+                    if (index > 0 && !handler) {
                         const temp = handlerSet[`/${ele}`];
                         if (typeof temp === 'function') {
                             handler = temp;
