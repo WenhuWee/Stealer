@@ -250,10 +250,10 @@ export default class APIServer {
 
     getZhihuFeed(params, callback) {
         const back = funcCheck(callback);
-        let url = params.url;
-        url = decodeURIComponent(url);
+        const name = params.name;
         const isForced = params.forced;
-        if (url) {
+        if (name) {
+            const url = `https://zhuanlan.zhihu.com/${name}`;
             if (isForced) {
                 this.generateFeed(url, (res, error) => {
                     if (res) {
@@ -266,7 +266,7 @@ export default class APIServer {
                 this.getFeed(url, back);
             }
         } else {
-            back(this.commonErrorWithMsg('bad url'));
+            back(this.commonErrorWithMsg('bad name'));
         }
     }
 
