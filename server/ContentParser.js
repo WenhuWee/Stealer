@@ -137,7 +137,7 @@ export default class ContentParser {
             }
         } else if (parseTask.type === 'author') {
             const feed = new FeedObject();
-            feed.title = `知乎专栏 - ${res.name}`;
+            feed.title = `${res.name}-知乎专栏`;
             feed.description = res.description;
             feed.id = `https://zhuanlan.zhihu.com${res.url}`;
             feed.link = `https://zhuanlan.zhihu.com${res.url}`;
