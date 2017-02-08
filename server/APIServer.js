@@ -348,9 +348,9 @@ export default class APIServer {
 
     delWeixinFeed(params, callback) {
         const back = funcCheck(callback);
-        const name = params.name;
-        if (name) {
-            const url = `http://weixin.sogou.com/weixin?type=1&query=${name}`;
+        let url = params.url;
+        url = decodeURIComponent(url);
+        if (url) {
             this.delFeed(url, back);
         } else {
             back(this.commonErrorWithMsg('bad url'));
