@@ -31,7 +31,7 @@ export default class Spider {
                         if (this.timeOutTimes[url]) {
                             delete this.timeOutTimes[url];
                         }
-                    }, this.getTimeOutTime(index), ele);
+                    }, this.getTimeOutTime(Math.random() * 10), ele);
                     this.timeOutTimes[ele] = timer;
                 });
             }
@@ -52,7 +52,7 @@ export default class Spider {
 
     getTimeOutTime(base) {
         if (process.env.NODE_ENV === 'production') {
-            return 2 * 60 * 1000 * base * Math.random() * 10;
+            return 60 * 1000 * base * Math.random() * 2;
         } else {
             return 1000 * base;
         }

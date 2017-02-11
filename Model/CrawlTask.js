@@ -10,7 +10,9 @@ export class TimingCrawlTask {
     constructor(url, interval) {
         this.url = url;
         if (process.env.NODE_ENV === 'production') {
-            this.interval = interval * 1000 * 60 * 60; // hour
+            const base = interval * 1000 * 60 * 60; // hour
+            const randomInterval = (Math.random() * (1.2 - 0.8) + 0.8) * base;
+            this.interval = randomInterval;
         } else {
             this.interval = 5 * interval * 1000; // second
         }
