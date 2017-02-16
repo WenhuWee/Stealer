@@ -163,8 +163,14 @@ export default class APIServer {
             const timer = {};
             const crawlTimer = this.spider.crawlTimers[key];
             timer.url = crawlTimer.url;
-            const time = crawlTimer.interval / (1000 * 60);
-            timer.interval = `${time.toFixed(1)}min`;
+
+            if (process.env.NODE_ENV === 'production') {
+                const time = crawlTimer.interval / (1000 * 60);
+                timer.interval = `${time.toFixed(1)}min`;
+            } else {
+                const time = crawlTimer.interval / (1000);
+                timer.interval = `${time.toFixed(1)}second`;
+            }
             timer.next = crawlTimer.nextTiming.toLocaleString('en-US', { timeZone: 'Asia/Shanghai' });
             timers.push(timer);
         });
