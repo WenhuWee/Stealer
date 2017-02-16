@@ -14,7 +14,7 @@ export class TimingCrawlTask {
             const randomInterval = (Math.random() * (1.2 - 0.8) + 0.8) * base;
             this.interval = randomInterval;
         } else {
-            this.interval = 5 * interval * 1000; // second
+            this.interval = 5 * 60 * interval * 1000; // second
         }
     }
 

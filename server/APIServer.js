@@ -201,7 +201,7 @@ export default class APIServer {
 
             // TODO:有点乱，以后改吧
             const currentDate = new Date();
-            let generateInterval = 60 * 15 * 1000;
+            let generateInterval = 60 * 60 * 1000;
             if (process.env.NODE_ENV !== 'production') {
                 generateInterval = 10 * 1000;
             }
@@ -211,7 +211,6 @@ export default class APIServer {
                 callback({ xml: feedObj.xml });
             } else if (!feedObj || (feedObj.errTime && currentDate - feedObj.errTime > generateInterval)) {
                 // generate
-
                 this.generateFeed(url, (res, error) => {
                     if (res) {
                         callback({ xml: res });
