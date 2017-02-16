@@ -24,6 +24,15 @@ export class FeedStoreModel {
         return Boolean(this.id);
     }
 
+    copy() {
+        const feed = new FeedStoreModel();
+        const keys = Object.keys(this);
+        keys.forEach((key) => {
+            feed[key] = this[key];
+        });
+        return feed;
+    }
+
     generateStoreObjectWithID() {
         if (this.id) {
             const storeObj = { _id: this.id };

@@ -90,7 +90,29 @@ export default class Spider {
                             feedModel.xml = xml;
 
                             StoreManager.instance().setRSSSource(feedModel);
+                        } else {
+                            StoreManager.instance().getRSSSource(crawlUrl, (feedObj) => {
+                                if (feedObj) {
+                                    const feedSource = feedObj.copy();
+                                    feedSource.errTime = new Date();
+                                    feedSource.errMsg = 'timer crawl generateRSSXML error';
+                                    StoreManager.instance().setRSSSource(feedSource);
+                                }
+                            });
                         }
+                    } else {
+                        StoreManager.instance().getRSSSource(crawlUrl, (feedObj) => {
+                            if (feedObj) {
+                                const feedSource = feedObj.copy();
+                                feedSource.errTime = new Date();
+                                if (error) {
+                                    feedSource.errMsg = error.error.message;
+                                } else {
+                                    feedSource.errMsg = 'unkonwn';
+                                }
+                                StoreManager.instance().setRSSSource(feedSource);
+                            }
+                        });
                     }
                 });
             });
