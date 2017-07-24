@@ -242,8 +242,12 @@ export default class ContentParser {
                                     const urlTask = URLManager.urlTasksFromURL(msgurl);
                                     urlTasks = urlTasks.concat(urlTask);
 
-                                    feedItem.link = msgurl;
+                                    // feedItem.link = msgurl;
                                     feedItem.id = msgurl;
+
+                                    // http://weixin.sogou.com/weixin?type=2&query=
+                                    feedItem.link = `http://weixin.sogou.com/weixin?type=2&query=${feedItem.title}`;
+                                    // feedItem.id = feedItem.title + ele.comm_msg_info.datetime;
                                 }
                                 parseTask.feed.addItem(feedItem);
 
@@ -262,8 +266,11 @@ export default class ContentParser {
                                                 const urlTask = URLManager.urlTasksFromURL(msgurl);
                                                 urlTasks = urlTasks.concat(urlTask);
 
-                                                multifeedItem.link = msgurl;
+                                                // multifeedItem.link = msgurl;
                                                 multifeedItem.id = msgurl;
+
+                                                multifeedItem.link = `http://weixin.sogou.com/weixin?type=2&query=${multifeedItem.title}`;
+                                                // multifeedItem.id = multifeedItem.title + ele.comm_msg_info.datetime;
                                             }
                                             parseTask.feed.addItem(multifeedItem);
                                         });

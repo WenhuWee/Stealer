@@ -74,7 +74,7 @@ export default class Spider {
 
     startTimerWithUrl(url) {
         if (url && !this.crawlTimers[url]) {
-            const timer = new TimingCrawlTask(url, 6);
+            const timer = new TimingCrawlTask(url, 12);
             this.crawlTimers[url] = timer;
             timer.start((crawlUrl) => {
                 devLog('------timer--------');
