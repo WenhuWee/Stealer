@@ -181,8 +181,8 @@ export default class APIServer {
                 res.dbDocs = [];
                 docs.forEach((ele) => {
                     const doc = {};
-                    if (ele.id) {
-                        doc.id = ele.id;
+                    if (ele._id) {
+                        doc.id = ele._id;
                     }
                     if (ele.lastItemDate) {
                         doc.lastItemDate = ele.lastItemDate.toLocaleString('en-US', { timeZone: 'Asia/Shanghai' });
@@ -331,11 +331,17 @@ export default class APIServer {
         const back = funcCheck(callback);
         let url = params.url;
         let id = params.id;
-        url = decodeURIComponent(url);
+        if (url) {
+            url = decodeURIComponent(url);
+        }
         if (url || id) {
-            StoreManager.instance().delRSSSource(id,url, (err) => {
+            StoreManager.instance().delRSSSource(id,url, (err,feed) => {
                 if (!err) {
-                    this.spider.stopTimerWithUrl(url);
+                    if (url) {
+                        this.spider.stopTimerWithUrl(url);
+                    } else if(feed){
+                        this.spider.stopTimerWithUrl(feed.url);
+                    }
                     callback(this.commonSuccessResponse);
                 } else {
                     callback(this.commonErrorResponse);

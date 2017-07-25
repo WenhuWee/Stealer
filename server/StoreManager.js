@@ -68,7 +68,11 @@ export default class StoreManager {
     }
 
     delRSSSource(id:string, url:string, callback) {
-        if (!id || !url || !callback) {
+        if (!callback) {
+            return;
+        }
+        if (!id && !url) {
+            callback(Error("no id and url"));
             return;
         }
 
@@ -79,8 +83,16 @@ export default class StoreManager {
             searchObj['url'] = url;
         }
 
-        this.db.remove(searchObj, {}, (err) => {
-            callback(err);
+        this.db.find(searchObj, (err, docs) => {
+            if (docs.length) {
+                const item = docs[0];
+                const feedModel = new FeedStoreModel(item);
+                this.db.remove({'_id':feedModel.id}, {}, (err) => {
+                    callback(err,feedModel);
+                });
+            } else {
+                callback(Error('no Item'),null);
+            }
         });
     }
 
