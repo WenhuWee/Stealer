@@ -210,6 +210,8 @@ export default class ContentParser {
             return text.indexOf('var biz') !== -1;
         });
 
+        const lastItemDate = task.lastItemDate;
+
         const parseTask = task.copy();
         parseTask.feed = new FeedObject();
         parseTask.feed.link = task.url;
@@ -236,9 +238,14 @@ export default class ContentParser {
                             msgList.every((ele,index) => {
                                 const feedDate = new Date(ele.comm_msg_info.datetime * 1000);
                                 if (feedDate) {
-                                    const gap = currentDate - feedDate;
-                                    if (gap > 3 * 24 * 60 * 60 * 1000) {
-                                        return false;
+                                    if (lastItemDate) {
+                                        return (feedDate - lastItemDate > 0);
+                                    }
+                                    else {
+                                        const gap = currentDate - feedDate;
+                                        if (gap > 3 * 24 * 60 * 60 * 1000) {
+                                            return false;
+                                        }
                                     }
                                 }
 

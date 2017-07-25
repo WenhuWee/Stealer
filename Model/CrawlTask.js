@@ -46,7 +46,6 @@ export class URLTask {
     header:string;
     type:string;
     error:Object;
-    feed: FeedObject;
 
     copy() {
         const task = new URLTask();
@@ -63,8 +62,7 @@ export class ParseTask {
     type:string;
     content:Object;
     error:Object;
-    feedObject: FeedObject;
-    feedXML:string;
+    feed:FeedObject;
 
     copy() {
         const task = new ParseTask();

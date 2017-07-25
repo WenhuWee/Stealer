@@ -119,9 +119,9 @@ export default class Spider {
         }
     }
 
-    crawlUrl(target, callback) {
+    crawlUrl(target, callback, prevFeed = null) {
         const urlTasks = URLManager.urlTasksFromURL(target);
-        this.crawlURLTasks(urlTasks, callback);
+        this.crawlURLTasks(urlTasks, callback, prevFeed);
     }
 
 

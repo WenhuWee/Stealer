@@ -224,7 +224,7 @@ export default class APIServer {
 
             if (shouldLoadFeed) {
                 // generate
-                this.generateFeed(name,url,(res, error) => {
+                this.generateFeed(name,url,feedObj.lastItemDate,(res, error) => {
                     if (res) {
                         callback({ xml: res });
                     } else {
@@ -279,9 +279,11 @@ export default class APIServer {
         }
     }
 
-    generateFeed(id,url,callback) {
+    generateFeed(id,url,lastItemDate,callback) {
         const back = funcCheck(callback);
         if (url && id) {
+            const feedObj = new FeedObject;
+            feedObj.lastItemDate = lastItemDate;
             this.spider.crawlUrl(url, (feed, err) => {
                 let data = null;
                 let error = null;
@@ -315,7 +317,7 @@ export default class APIServer {
                 } else {
                     callback(null, this.commonErrorWithMsg('unknown'));
                 }
-            });
+            },feedObj);
         } else {
             back(null, this.lackErrorResponse);
         }
