@@ -21,8 +21,8 @@ export default class APIServer {
                 status: this.getCurrentStatus,
             },
             del: {
-                zhihu: this.delZhihuFeed,
-                weixin: this.delWeixinFeed,
+                zhihu: this.delFeed,
+                weixin: this.delFeed,
             },
         };
 
@@ -183,6 +183,9 @@ export default class APIServer {
                     if (ele.id) {
                         doc.id = ele.id;
                     }
+                    if (ele.lastItemDate) {
+                        doc.lastItemDate = ele.lastItemDate.toLocaleString('en-US', { timeZone: 'Asia/Shanghai' });
+                    }
 
                     if (ele.url) {
                         doc.url = ele.url;
@@ -200,7 +203,7 @@ export default class APIServer {
         });
     }
 
-    getFeed(id,url, callback) {
+    getFeed(id,url,isForced, callback) {
         if (typeof callback !== 'function') {
             return;
         }
@@ -209,25 +212,30 @@ export default class APIServer {
         }
         StoreManager.instance().getRSSSource(id,url, (feedObj) => {
 
-            // TODO:有点乱，以后改吧
-            const currentDate = new Date();
-            let generateInterval = 60 * 60 * 1000;
-            if (process.env.NODE_ENV !== 'production') {
-                generateInterval = 10 * 1000;
+            let shouldLoadFeed = isForced;
+            if (!shouldLoadFeed) {
+                const currentDate = new Date();
+                let generateInterval = 60 * 60 * 1000;
+                if (process.env.NODE_ENV !== 'production') {
+                    generateInterval = 10 * 1000;
+                }
+                shouldLoadFeed = !feedObj || (feedObj.errTime && currentDate - feedObj.errTime > generateInterval)
             }
-            if (feedObj && feedObj.xml) {
-                // from db
-                devLog('From DB');
-                callback({ xml: feedObj.xml });
-            } else if (!feedObj || (feedObj.errTime && currentDate - feedObj.errTime > generateInterval)) {
+
+            if (shouldLoadFeed) {
                 // generate
-                this.generateFeed(name,url, (res, error) => {
+                this.generateFeed(name,url,(res, error) => {
                     if (res) {
                         callback({ xml: res });
                     } else {
                         callback(error);
                     }
                 });
+            }
+            else if(feedObj && feedObj.xml) {
+                // from db
+                devLog('From DB');
+                callback({ xml: feedObj.xml });
             } else {
                 // error
                 callback(this.commonErrorWithMsg('too frequent!'));
@@ -241,17 +249,7 @@ export default class APIServer {
         const isForced = params.forced;
         if (name) {
             const url = `http://chuansong.me/search?q=${name}`;
-            if (isForced) {
-                this.generateFeed(name,url, (res, error) => {
-                    if (res) {
-                        callback({ xml: res });
-                    } else {
-                        callback(error);
-                    }
-                });
-            } else {
-                this.getFeed(name,url, back);
-            }
+            this.getFeed(name,url,isForced,back);
         } else {
             back(this.commonErrorWithMsg('bad url'));
         }
@@ -263,17 +261,7 @@ export default class APIServer {
         const isForced = params.forced;
         if (name) {
             const url = `https://zhuanlan.zhihu.com/${name}`;
-            if (isForced) {
-                this.generateFeed(name,url, (res, error) => {
-                    if (res) {
-                        callback({ xml: res });
-                    } else {
-                        callback(error);
-                    }
-                });
-            } else {
-                this.getFeed(name,url, back);
-            }
+            this.getFeed(name,url,isForced,back);
         } else {
             back(this.commonErrorWithMsg('bad name'));
         }
@@ -285,23 +273,13 @@ export default class APIServer {
         const isForced = params.forced;
         if (name) {
             const url = `http://weixin.sogou.com/weixin?type=1&query=${name}`;
-            if (isForced) {
-                this.generateFeed(name,url, (res, error) => {
-                    if (res) {
-                        callback({ xml: res });
-                    } else {
-                        callback(error);
-                    }
-                });
-            } else {
-                this.getFeed(name,url, back);
-            }
+            this.getFeed(name,url,isForced,back);
         } else {
             back(this.commonErrorWithMsg('bad url'));
         }
     }
 
-    generateFeed(id,url, callback) {
+    generateFeed(id,url,callback) {
         const back = funcCheck(callback);
         if (url && id) {
             this.spider.crawlUrl(url, (feed, err) => {
@@ -321,6 +299,7 @@ export default class APIServer {
                 feedSource.url = url;
                 if (data) {
                     devLog('From Real Time');
+                    feedSource.lastItemDate = feed.lastItemDate;
                     feedSource.xml = data;
                     StoreManager.instance().setRSSSource(feedSource);
                     this.spider.startTimerWithUrl(url);
@@ -343,33 +322,11 @@ export default class APIServer {
     }
 
 // DEL
-
-    delZhihuFeed(params, callback) {
+    delFeed(params, callback) {
         const back = funcCheck(callback);
         let url = params.url;
         let id = params.id;
         url = decodeURIComponent(url);
-        if (url || id) {
-            this.delFeed(id,url, back);
-        } else {
-            back(this.commonErrorWithMsg('bad url'));
-        }
-    }
-
-    delWeixinFeed(params, callback) {
-        const back = funcCheck(callback);
-        let url = params.url;
-        let id = params.id;
-        url = decodeURIComponent(url);
-        if (url || id) {
-            this.delFeed(id,url, back);
-        } else {
-            back(this.commonErrorWithMsg('bad url'));
-        }
-    }
-
-    delFeed(id,url, callback) {
-        const back = funcCheck(callback);
         if (url || id) {
             StoreManager.instance().delRSSSource(id,url, (err) => {
                 if (!err) {

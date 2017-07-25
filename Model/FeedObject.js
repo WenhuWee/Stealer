@@ -10,6 +10,7 @@ export class FeedObject {
     id: string;
     link: string;
     items: Map;
+    lastItemDate:Date;
 
     constructor() {
         this.items = new Map();
@@ -55,6 +56,9 @@ export class FeedObject {
     addItem(item) {
         if (item.mergeID) {
             this.items = this.items.set(item.mergeID, item);
+            if (this.lastItemDate && this.lastItemDate < item.date) {
+                this.lastItemDate = item.date;
+            }
         }
     }
 

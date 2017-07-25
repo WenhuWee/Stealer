@@ -3,6 +3,7 @@ export class FeedStoreModel {
     id: string;
     url: string;
     xml: string;
+    lastItemDate:Date;
     errMsg:string;
     errTime:Date;
     createdTime:Date;
@@ -13,6 +14,7 @@ export class FeedStoreModel {
                 this.id = obj._id;
                 this.url = obj.url;
                 this.xml = obj.xml;
+                this.lastItemDate = obj.lastItemDate;
                 this.errMsg = obj.errMsg;
                 this.errTime = obj.errTime;
             }
@@ -38,6 +40,7 @@ export class FeedStoreModel {
             const storeObj = { _id: this.id };
             storeObj.url = this.url;
             storeObj.xml = this.xml;
+            storeObj.lastItemDate = this.lastItemDate;
             storeObj.errMsg = this.errMsg;
             storeObj.errTime = this.errTime;
             storeObj.createdTime = this.createdTime;
@@ -52,6 +55,7 @@ export class FeedStoreModel {
             const storeObj = {};
             storeObj.url = this.url;
             storeObj.xml = this.xml;
+            storeObj.lastItemDate = this.lastItemDate;
             storeObj.errMsg = this.errMsg;
             storeObj.errTime = this.errTime;
             storeObj.createdTime = this.createdTime;
