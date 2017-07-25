@@ -137,6 +137,15 @@ export default class Spider {
                 this.logWithTasks(parseTasks);
                 callback(null, error);
             } else {
+                if (prevFeed) {
+                    parseTasks.forEach((ele)=>{
+                        if (ele.feed) {
+                            ele.feed = ele.feed.merge(prevFeed);
+                        } else {
+                            ele.feed = prevFeed;
+                        }
+                    });
+                }
                 this.contentParser.parse(parseTasks, (urlTasks, feed, err) => {
                     if (err) {
                         callback(null, err);

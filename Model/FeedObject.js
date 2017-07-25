@@ -56,8 +56,12 @@ export class FeedObject {
     addItem(item) {
         if (item.mergeID) {
             this.items = this.items.set(item.mergeID, item);
-            if (this.lastItemDate && this.lastItemDate < item.date) {
-                this.lastItemDate = item.date;
+            if (item.date) {
+                if (this.lastItemDate && this.lastItemDate < item.date) {
+                    this.lastItemDate = item.date;
+                } else {
+                    this.lastItemDate = item.date;
+                }
             }
         }
     }

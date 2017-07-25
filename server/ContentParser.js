@@ -210,7 +210,7 @@ export default class ContentParser {
             return text.indexOf('var biz') !== -1;
         });
 
-        const lastItemDate = task.lastItemDate;
+        const lastItemDate = task.feed.lastItemDate;
 
         const parseTask = task.copy();
         parseTask.feed = new FeedObject();
@@ -232,17 +232,20 @@ export default class ContentParser {
                         if (obj) {
                             msgList = obj.list;
                         }
-                        const currentDate = Data.now();
+                        const currentDate = new Date();
 
                         if (Array.isArray(msgList)) {
                             msgList.every((ele,index) => {
+                                if (index > 10){
+                                    return false;
+                                }
+
                                 const feedDate = new Date(ele.comm_msg_info.datetime * 1000);
                                 if (feedDate) {
-                                    if (lastItemDate) {
-                                        return (feedDate - lastItemDate > 0);
-                                    }
-                                    else {
-                                        const gap = currentDate - feedDate;
+                                    if (lastItemDate && lastItemDate >= feedDate) {
+                                        return false;
+                                    } else {
+                                        const gap = currentDate.getTime() - feedDate.getTime();
                                         if (gap > 3 * 24 * 60 * 60 * 1000) {
                                             return false;
                                         }
@@ -287,8 +290,7 @@ export default class ContentParser {
                                         });
                                     }
                                 }
-
-                                return index < 5;
+                                return true;
                             });
                         }
                     }

@@ -3,6 +3,7 @@
 import StoreManager from './StoreManager';
 import { funcCheck, safeJSONParse, devLog } from '../utils/misc';
 import Spider from './Spider';
+import { FeedObject } from '../Model/FeedObject.js';
 import { FeedStoreModel } from '../model/FeedStoreModel';
 
 const Url = require('url');
@@ -222,9 +223,11 @@ export default class APIServer {
                 shouldLoadFeed = !feedObj || (feedObj.errTime && currentDate - feedObj.errTime > generateInterval)
             }
 
+            const lastDate = feedObj ? feedObj.lastItemDate : null;
+
             if (shouldLoadFeed) {
                 // generate
-                this.generateFeed(name,url,feedObj.lastItemDate,(res, error) => {
+                this.generateFeed(id,url,lastDate,(res, error) => {
                     if (res) {
                         callback({ xml: res });
                     } else {
@@ -282,7 +285,7 @@ export default class APIServer {
     generateFeed(id,url,lastItemDate,callback) {
         const back = funcCheck(callback);
         if (url && id) {
-            const feedObj = new FeedObject;
+            const feedObj = new FeedObject();
             feedObj.lastItemDate = lastItemDate;
             this.spider.crawlUrl(url, (feed, err) => {
                 let data = null;
