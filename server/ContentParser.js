@@ -125,6 +125,7 @@ export default class ContentParser {
                     const item = new FeedItemObject();
                     item.title = ele.title;
                     item.id = `https://zhuanlan.zhihu.com${ele.url}`;
+                    item.mergeID = `https://zhuanlan.zhihu.com${ele.url}`;
                     item.link = `https://zhuanlan.zhihu.com${ele.url}`;
                     item.date = new Date(ele.publishedTime);
                     item.content = ele.content;
@@ -195,7 +196,7 @@ export default class ContentParser {
         parseTask.feed = new FeedObject();
         const item = new FeedItemObject();
         item.content = content.html();
-        item.id = task.url;
+        item.mergeID = task.url;
         parseTask.feed.addItem(item);
         callback([], parseTask, null);
     }
@@ -242,12 +243,8 @@ export default class ContentParser {
                                     const urlTask = URLManager.urlTasksFromURL(msgurl);
                                     urlTasks = urlTasks.concat(urlTask);
 
-                                    // feedItem.link = msgurl;
-                                    feedItem.id = msgurl;
-
-                                    // http://weixin.sogou.com/weixin?type=2&query=
+                                    feedItem.mergeID = msgurl;
                                     feedItem.link = `http://weixin.sogou.com/weixin?type=2&query=${feedItem.title}`;
-                                    // feedItem.id = feedItem.title + ele.comm_msg_info.datetime;
                                 }
                                 parseTask.feed.addItem(feedItem);
 
@@ -266,11 +263,8 @@ export default class ContentParser {
                                                 const urlTask = URLManager.urlTasksFromURL(msgurl);
                                                 urlTasks = urlTasks.concat(urlTask);
 
-                                                // multifeedItem.link = msgurl;
-                                                multifeedItem.id = msgurl;
-
+                                                multifeedItem.mergeID = msgurl;
                                                 multifeedItem.link = `http://weixin.sogou.com/weixin?type=2&query=${multifeedItem.title}`;
-                                                // multifeedItem.id = multifeedItem.title + ele.comm_msg_info.datetime;
                                             }
                                             parseTask.feed.addItem(multifeedItem);
                                         });

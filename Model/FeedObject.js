@@ -53,8 +53,8 @@ export class FeedObject {
     }
 
     addItem(item) {
-        if (item.id) {
-            this.items = this.items.set(item.id, item);
+        if (item.mergeID) {
+            this.items = this.items.set(item.mergeID, item);
         }
     }
 
@@ -78,8 +78,15 @@ export class FeedObject {
                 feedUpdatedTime = ele.date;
             }
 
-            const idString = ele.date.getTime() + ele.title;
-            const itemid = utils.MD5(idString);
+            let itemid = null;
+            if (ele.id) {
+                itemid = ele.id;
+            }
+            else {
+              const idString = this.id + ele.date.getTime() + ele.title;
+              itemid = utils.MD5(idString);
+            }
+
 
             feed.addItem({
                 title: ele.title,
@@ -108,6 +115,7 @@ export class FeedObject {
 export class FeedItemObject {
     title: string;
     id: string;
+    mergeID: string;
     link: string;
     date: Date;
     content: string;
