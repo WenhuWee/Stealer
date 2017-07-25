@@ -230,12 +230,22 @@ export default class ContentParser {
                         if (obj) {
                             msgList = obj.list;
                         }
+                        const currentDate = Data.now();
+
                         if (Array.isArray(msgList)) {
-                            msgList.forEach((ele) => {
+                            msgList.every((ele,index) => {
+                                const feedDate = new Date(ele.comm_msg_info.datetime * 1000);
+                                if (feedDate) {
+                                    const gap = currentDate - feedDate;
+                                    if (gap > 3 * 24 * 60 * 60 * 1000) {
+                                        return false;
+                                    }
+                                }
+
                                 const feedItem = new FeedItemObject();
                                 feedItem.authorName = ele.app_msg_ext_info.author;
                                 feedItem.title = ele.app_msg_ext_info.title;
-                                feedItem.date = new Date(ele.comm_msg_info.datetime * 1000);
+                                feedItem.date = feedDate;
 
                                 if (ele.app_msg_ext_info.content_url) {
                                     const decodeURL = ele.app_msg_ext_info.content_url.replace(/&amp;/g, '&');
@@ -270,6 +280,8 @@ export default class ContentParser {
                                         });
                                     }
                                 }
+
+                                return index < 5;
                             });
                         }
                     }
