@@ -67,12 +67,19 @@ export default class StoreManager {
         });
     }
 
-    delRSSSource(url:string, callback) {
-        if (!url || !callback) {
+    delRSSSource(id:string, url:string, callback) {
+        if (!id || !url || !callback) {
             return;
         }
 
-        this.db.remove({ _id: url }, {}, (err) => {
+        let searchObj = {};
+        if (id) {
+            searchObj['_id'] = id;
+        }else if (url) {
+            searchObj['url'] = url;
+        }
+
+        this.db.remove(searchObj, {}, (err) => {
             callback(err);
         });
     }
@@ -99,9 +106,16 @@ export default class StoreManager {
         }
     }
 
-    getRSSSource(url, callback) {
-        if (url && callback && this.db) {
-            this.db.find({ _id: url }, (err, docs) => {
+    getRSSSource(id,url, callback) {
+        if (callback && this.db && (id || url)) {
+          let searchObj = {};
+          if (id) {
+              searchObj['_id'] = id;
+          }else if (url) {
+              searchObj['url'] = url;
+          }
+
+            this.db.find(searchObj, (err, docs) => {
                 if (docs.length) {
                     const item = docs[0];
                     const feedModel = new FeedStoreModel(item);

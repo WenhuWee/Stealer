@@ -85,13 +85,13 @@ export default class Spider {
                         const xml = feed.generateRSSXML();
                         if (xml) {
                             const feedModel = new FeedStoreModel();
-                            feedModel.id = crawlUrl;
+                            feedModel.id = feed.id;
                             feedModel.url = crawlUrl;
                             feedModel.xml = xml;
 
                             StoreManager.instance().setRSSSource(feedModel);
                         } else {
-                            StoreManager.instance().getRSSSource(crawlUrl, (feedObj) => {
+                            StoreManager.instance().getRSSSource(feed.id,crawlUrl, (feedObj) => {
                                 if (feedObj) {
                                     const feedSource = feedObj.copy();
                                     feedSource.errTime = new Date();
@@ -101,7 +101,7 @@ export default class Spider {
                             });
                         }
                     } else {
-                        StoreManager.instance().getRSSSource(crawlUrl, (feedObj) => {
+                        StoreManager.instance().getRSSSource(nil,crawlUrl, (feedObj) => {
                             if (feedObj) {
                                 const feedSource = feedObj.copy();
                                 feedSource.errTime = new Date();

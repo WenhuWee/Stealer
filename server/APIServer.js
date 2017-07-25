@@ -180,6 +180,10 @@ export default class APIServer {
                 res.dbDocs = [];
                 docs.forEach((ele) => {
                     const doc = {};
+                    if (ele.id) {
+                        doc.id = ele.id;
+                    }
+
                     if (ele.url) {
                         doc.url = ele.url;
                     }
@@ -196,14 +200,14 @@ export default class APIServer {
         });
     }
 
-    getFeed(url, callback) {
+    getFeed(id,url, callback) {
         if (typeof callback !== 'function') {
             return;
         }
-        if (!url) {
+        if (!url || !id) {
             callback(this.lackErrorResponse);
         }
-        StoreManager.instance().getRSSSource(url, (feedObj) => {
+        StoreManager.instance().getRSSSource(id,url, (feedObj) => {
 
             // TODO:有点乱，以后改吧
             const currentDate = new Date();
@@ -217,7 +221,7 @@ export default class APIServer {
                 callback({ xml: feedObj.xml });
             } else if (!feedObj || (feedObj.errTime && currentDate - feedObj.errTime > generateInterval)) {
                 // generate
-                this.generateFeed(url, (res, error) => {
+                this.generateFeed(name,url, (res, error) => {
                     if (res) {
                         callback({ xml: res });
                     } else {
@@ -238,7 +242,7 @@ export default class APIServer {
         if (name) {
             const url = `http://chuansong.me/search?q=${name}`;
             if (isForced) {
-                this.generateFeed(url, (res, error) => {
+                this.generateFeed(name,url, (res, error) => {
                     if (res) {
                         callback({ xml: res });
                     } else {
@@ -246,7 +250,7 @@ export default class APIServer {
                     }
                 });
             } else {
-                this.getFeed(url, back);
+                this.getFeed(name,url, back);
             }
         } else {
             back(this.commonErrorWithMsg('bad url'));
@@ -260,7 +264,7 @@ export default class APIServer {
         if (name) {
             const url = `https://zhuanlan.zhihu.com/${name}`;
             if (isForced) {
-                this.generateFeed(url, (res, error) => {
+                this.generateFeed(name,url, (res, error) => {
                     if (res) {
                         callback({ xml: res });
                     } else {
@@ -268,7 +272,7 @@ export default class APIServer {
                     }
                 });
             } else {
-                this.getFeed(url, back);
+                this.getFeed(name,url, back);
             }
         } else {
             back(this.commonErrorWithMsg('bad name'));
@@ -282,7 +286,7 @@ export default class APIServer {
         if (name) {
             const url = `http://weixin.sogou.com/weixin?type=1&query=${name}`;
             if (isForced) {
-                this.generateFeed(url, (res, error) => {
+                this.generateFeed(name,url, (res, error) => {
                     if (res) {
                         callback({ xml: res });
                     } else {
@@ -290,16 +294,16 @@ export default class APIServer {
                     }
                 });
             } else {
-                this.getFeed(url, back);
+                this.getFeed(name,url, back);
             }
         } else {
             back(this.commonErrorWithMsg('bad url'));
         }
     }
 
-    generateFeed(url, callback) {
+    generateFeed(id,url, callback) {
         const back = funcCheck(callback);
-        if (url) {
+        if (url && id) {
             this.spider.crawlUrl(url, (feed, err) => {
                 let data = null;
                 let error = null;
@@ -313,7 +317,7 @@ export default class APIServer {
                 }
 
                 const feedSource = new FeedStoreModel();
-                feedSource.id = url;
+                feedSource.id = id;
                 feedSource.url = url;
                 if (data) {
                     devLog('From Real Time');
@@ -343,9 +347,10 @@ export default class APIServer {
     delZhihuFeed(params, callback) {
         const back = funcCheck(callback);
         let url = params.url;
+        let id = params.id;
         url = decodeURIComponent(url);
-        if (url) {
-            this.delFeed(url, back);
+        if (url || id) {
+            this.delFeed(id,url, back);
         } else {
             back(this.commonErrorWithMsg('bad url'));
         }
@@ -354,18 +359,19 @@ export default class APIServer {
     delWeixinFeed(params, callback) {
         const back = funcCheck(callback);
         let url = params.url;
+        let id = params.id;
         url = decodeURIComponent(url);
-        if (url) {
-            this.delFeed(url, back);
+        if (url || id) {
+            this.delFeed(id,url, back);
         } else {
             back(this.commonErrorWithMsg('bad url'));
         }
     }
 
-    delFeed(url, callback) {
+    delFeed(id,url, callback) {
         const back = funcCheck(callback);
-        if (url) {
-            StoreManager.instance().delRSSSource(url, (err) => {
+        if (url || id) {
+            StoreManager.instance().delRSSSource(id,url, (err) => {
                 if (!err) {
                     this.spider.stopTimerWithUrl(url);
                     callback(this.commonSuccessResponse);
