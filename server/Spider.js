@@ -48,32 +48,6 @@ export default class Spider {
                 throw Error('Can not Find "./log" Dir');
             }
         }
-
-        this.cleanTimer = setInterval(() => {
-            this.cleanDB();
-        }, 24 * 60 * 60 * 1000);
-    }
-
-    cleanDB() {
-        const removeItem = [];
-        const currentDateTime = Date.now();
-        const gap = 5 * 24 * 60 * 60 * 1000;
-        StoreManager.instance().getAllDocs((docs)=>{
-            docs.forEach((doc)=>{
-                if (doc.lastVisitedDate && currentDateTime - doc.lastVisitedDate.getTime() > gap) {
-                    const feedModel = new FeedStoreModel(doc);
-                    removeItem.push(feedModel);
-                }
-            })
-
-            if (removeItem.length) {
-                removeItem.forEach((ele)=>{
-                    this.db.remove({'_id':ele.id}, {}, (err) => {
-
-                    });
-                });
-            }
-        });
     }
 
     getTimeOutTime(base) {
@@ -106,7 +80,7 @@ export default class Spider {
 
                 StoreManager.instance().getRSSSource(null,crawlUrl, (feedObj) => {
                     const currentDateTime = Date.now();
-                    const gap = 5 * 24 * 60 * 60 * 1000;
+                    const gap = 3 * 24 * 60 * 60 * 1000;
                     if (feedObj && feedObj.lastVisitedDate && currentDateTime - doc.lastVisitedDate.getTime() > gap) {
                         StoreManager.instance().delRSSSource(feedObj.id,null, (err,feed) => {
                             if (!err && feed.url) {
