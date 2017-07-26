@@ -159,7 +159,7 @@ export default class Spider {
     }
 
     crawlUrl(target, callback, prevFeed = null) {
-        const urlTasks = URLManager.urlTasksFromURL(target);
+        const urlTasks = this.contentParser.urlTasksFromURL(target);
         this.crawlURLTasks(urlTasks, callback, prevFeed);
     }
 
