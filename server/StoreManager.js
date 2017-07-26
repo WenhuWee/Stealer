@@ -106,7 +106,7 @@ export default class StoreManager {
         }else if (url) {
             searchObj['url'] = url;
         }
-        this.db.update(searchObj, {lastVisitedDate:lastVisitedDate}, {}, (updateErr, updateNewDocs) => {
+        this.db.update(searchObj, {$set:{lastVisitedDate:lastVisitedDate}}, {}, (updateErr, updateNewDocs) => {
             if (updateNewDocs) {
 
             }

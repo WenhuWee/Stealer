@@ -197,6 +197,9 @@ export default class APIServer {
                     if (ele.errTime) {
                         doc.errTime = ele.errTime;
                     }
+                    if (ele.lastVisitedDate) {
+                        doc.lastVisitedDate = ele.lastVisitedDate.toLocaleString('en-US', { timeZone: 'Asia/Shanghai' });
+                    }
                     res.dbDocs.push(doc);
                 });
             }

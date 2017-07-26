@@ -77,14 +77,13 @@ export default class Spider {
             const timer = new TimingCrawlTask(url, 12);
             this.crawlTimers[url] = timer;
             timer.start((crawlUrl) => {
-
                 StoreManager.instance().getRSSSource(null,crawlUrl, (feedObj) => {
                     const currentDateTime = Date.now();
                     const gap = 3 * 24 * 60 * 60 * 1000;
-                    if (feedObj && feedObj.lastVisitedDate && currentDateTime - doc.lastVisitedDate.getTime() > gap) {
+                    if (feedObj && feedObj.lastVisitedDate && currentDateTime - feedObj.lastVisitedDate.getTime() > gap) {
                         StoreManager.instance().delRSSSource(feedObj.id,null, (err,feed) => {
                             if (!err && feed.url) {
-                                this.spider.stopTimerWithUrl(feed.url);
+                                this.stopTimerWithUrl(feed.url);
                             }
                         });
                     } else {
