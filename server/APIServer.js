@@ -211,6 +211,11 @@ export default class APIServer {
         if (!url || !id) {
             callback(this.lackErrorResponse);
         }
+
+        const currentDate = new Date();
+
+        StoreManager.instance().updateLastVisitedDate (id,url,currentDate);
+
         StoreManager.instance().getRSSSource(id,url, (feedObj) => {
 
             let shouldLoadFeed = isForced;

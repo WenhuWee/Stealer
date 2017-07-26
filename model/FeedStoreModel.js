@@ -7,6 +7,7 @@ export class FeedStoreModel {
     errMsg:string;
     errTime:Date;
     createdTime:Date;
+    lastVisitedDate:Date;
 
     constructor(obj) {
         if (typeof obj === 'object') {
@@ -17,6 +18,7 @@ export class FeedStoreModel {
                 this.lastItemDate = obj.lastItemDate;
                 this.errMsg = obj.errMsg;
                 this.errTime = obj.errTime;
+                this.lastVisitedDate = obj.lastVisitedDate;
             }
         }
         this.createdTime = new Date();
@@ -44,6 +46,7 @@ export class FeedStoreModel {
             storeObj.errMsg = this.errMsg;
             storeObj.errTime = this.errTime;
             storeObj.createdTime = this.createdTime;
+            storeObj.lastVisitedDate = this.lastVisitedDate;
             return storeObj;
         } else {
             return null;
@@ -59,6 +62,7 @@ export class FeedStoreModel {
             storeObj.errMsg = this.errMsg;
             storeObj.errTime = this.errTime;
             storeObj.createdTime = this.createdTime;
+            storeObj.lastVisitedDate = this.lastVisitedDate;
             return storeObj;
         } else {
             return null;

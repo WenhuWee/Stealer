@@ -96,6 +96,23 @@ export default class StoreManager {
         });
     }
 
+    updateLastVisitedDate(id:String,url:String,lastVisitedDate:Date) {
+        if ((!id && !url) || !lastVisitedDate) {
+            return;
+        }
+        let searchObj = {};
+        if (id) {
+            searchObj['_id'] = id;
+        }else if (url) {
+            searchObj['url'] = url;
+        }
+        this.db.update(searchObj, {lastVisitedDate:lastVisitedDate}, {}, (updateErr, updateNewDocs) => {
+            if (updateNewDocs) {
+
+            }
+        });
+    }
+
     setRSSSource(source:FeedStoreModel) {
         if (source instanceof FeedStoreModel && source.isValid()) {
             this.db.find({ _id: source.id }, (err, docs) => {

@@ -48,6 +48,32 @@ export default class Spider {
                 throw Error('Can not Find "./log" Dir');
             }
         }
+
+        this.cleanTimer = setInterval(() => {
+            this.cleanDB();
+        }, 24 * 60 * 60 * 1000);
+    }
+
+    cleanDB() {
+        const removeItem = [];
+        const currentDateTime = Date.now();
+        const gap = 5 * 24 * 60 * 60 * 1000;
+        StoreManager.instance().getAllDocs((docs)=>{
+            docs.forEach((doc)=>{
+                if (doc.lastVisitedDate && currentDateTime - doc.lastVisitedDate.getTime() > gap) {
+                    const feedModel = new FeedStoreModel(doc);
+                    removeItem.push(feedModel);
+                }
+            })
+
+            if (removeItem.length) {
+                removeItem.forEach((ele)=>{
+                    this.db.remove({'_id':ele.id}, {}, (err) => {
+
+                    });
+                });
+            }
+        });
     }
 
     getTimeOutTime(base) {
@@ -77,40 +103,53 @@ export default class Spider {
             const timer = new TimingCrawlTask(url, 12);
             this.crawlTimers[url] = timer;
             timer.start((crawlUrl) => {
-                devLog('------timer--------');
-                devLog(crawlUrl);
-                this.crawlUrl(crawlUrl, (feed, error) => {
-                    devLog(error);
-                    if (feed) {
-                        const xml = feed.generateRSSXML();
-                        if (xml) {
-                            const feedModel = new FeedStoreModel();
-                            feedModel.id = feed.id;
-                            feedModel.url = crawlUrl;
-                            feedModel.xml = xml;
 
-                            StoreManager.instance().setRSSSource(feedModel);
-                        } else {
-                            StoreManager.instance().getRSSSource(feed.id,crawlUrl, (feedObj) => {
-                                if (feedObj) {
-                                    const feedSource = feedObj.copy();
-                                    feedSource.errTime = new Date();
-                                    feedSource.errMsg = 'timer crawl generateRSSXML error';
-                                    StoreManager.instance().setRSSSource(feedSource);
-                                }
-                            });
-                        }
+                StoreManager.instance().getRSSSource(null,crawlUrl, (feedObj) => {
+                    const currentDateTime = Date.now();
+                    const gap = 5 * 24 * 60 * 60 * 1000;
+                    if (feedObj && feedObj.lastVisitedDate && currentDateTime - doc.lastVisitedDate.getTime() > gap) {
+                        StoreManager.instance().delRSSSource(feedObj.id,null, (err,feed) => {
+                            if (!err && feed.url) {
+                                this.spider.stopTimerWithUrl(feed.url);
+                            }
+                        });
                     } else {
-                        StoreManager.instance().getRSSSource(nil,crawlUrl, (feedObj) => {
-                            if (feedObj) {
-                                const feedSource = feedObj.copy();
-                                feedSource.errTime = new Date();
-                                if (error) {
-                                    feedSource.errMsg = error.error.message;
+                        devLog('------timer--------');
+                        devLog(crawlUrl);
+                        this.crawlUrl(crawlUrl, (feed, error) => {
+                            devLog(error);
+                            if (feed) {
+                                const xml = feed.generateRSSXML();
+                                if (xml) {
+                                    const feedModel = new FeedStoreModel();
+                                    feedModel.id = feed.id;
+                                    feedModel.url = crawlUrl;
+                                    feedModel.xml = xml;
+
+                                    StoreManager.instance().setRSSSource(feedModel);
                                 } else {
-                                    feedSource.errMsg = 'unkonwn';
+                                    StoreManager.instance().getRSSSource(feed.id,crawlUrl, (feedObj) => {
+                                        if (feedObj) {
+                                            const feedSource = feedObj.copy();
+                                            feedSource.errTime = new Date();
+                                            feedSource.errMsg = 'timer crawl generateRSSXML error';
+                                            StoreManager.instance().setRSSSource(feedSource);
+                                        }
+                                    });
                                 }
-                                StoreManager.instance().setRSSSource(feedSource);
+                            } else {
+                                StoreManager.instance().getRSSSource(nil,crawlUrl, (feedObj) => {
+                                    if (feedObj) {
+                                        const feedSource = feedObj.copy();
+                                        feedSource.errTime = new Date();
+                                        if (error) {
+                                            feedSource.errMsg = error.error.message;
+                                        } else {
+                                            feedSource.errMsg = 'unkonwn';
+                                        }
+                                        StoreManager.instance().setRSSSource(feedSource);
+                                    }
+                                });
                             }
                         });
                     }
