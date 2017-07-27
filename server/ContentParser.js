@@ -178,6 +178,7 @@ export default class ContentParser {
         parseTask.feed.title = `公众号 - ${name}`;
         parseTask.feed.description = description;
         parseTask.feed.id = id;
+        parseTask.feed.link = task.url;
 
         callback(urlTasks, parseTask, null);
     }
@@ -214,7 +215,7 @@ export default class ContentParser {
 
         const parseTask = task.copy();
         parseTask.feed = new FeedObject();
-        parseTask.feed.link = task.url;
+        // parseTask.feed.link = task.url;
         let urlTasks = [];
 
         if (script) {
