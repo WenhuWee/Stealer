@@ -200,6 +200,9 @@ export default class APIServer {
                     if (ele.lastVisitedDate) {
                         doc.lastVisitedDate = ele.lastVisitedDate.toLocaleString('en-US', { timeZone: 'Asia/Shanghai' });
                     }
+                    if (ele.updatedTime) {
+                        doc.updatedTime = ele.updatedTime.toLocaleString('en-US', { timeZone: 'Asia/Shanghai' });
+                    }
                     res.dbDocs.push(doc);
                 });
             }
@@ -314,6 +317,7 @@ export default class APIServer {
                     devLog('From Real Time');
                     feedSource.lastItemDate = feed.lastItemDate;
                     feedSource.xml = data;
+                    feedSource.updatedTime = new Date();
                     StoreManager.instance().setRSSSource(feedSource);
                     this.spider.startTimerWithUrl(url);
                     callback(data, null);

@@ -98,6 +98,7 @@ export default class Spider {
                                     feedModel.id = feed.id;
                                     feedModel.url = crawlUrl;
                                     feedModel.xml = xml;
+                                    feedModel.updatedTime = new Date();
 
                                     StoreManager.instance().setRSSSource(feedModel);
                                 } else {
