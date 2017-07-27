@@ -23,13 +23,13 @@ export default class Spider {
         this.crawlTimers = {};
         this.timeOutTimes = {};
 
-        StoreManager.instance().getAllURL((urls) => {
-            if (Array.isArray(urls) && urls.length) {
-                urls.forEach((ele, index) => {
-                    const timer = setTimeout((url) => {
-                        this.startTimerWithUrl(url);
-                        if (this.timeOutTimes[url]) {
-                            delete this.timeOutTimes[url];
+        StoreManager.instance().getAllURL((feeds) => {
+            if (Array.isArray(feeds) && feeds.length) {
+                feeds.forEach((ele, index) => {
+                    const timer = setTimeout((feed) => {
+                        this.startTimerWithUrl(feed.url,feed.interval,feed.updatedTime);
+                        if (this.timeOutTimes[feed.url]) {
+                            delete this.timeOutTimes[feed.url];
                         }
                     }, this.getTimeOutTime(Math.random() * 10), ele);
                     this.timeOutTimes[ele] = timer;
@@ -72,9 +72,15 @@ export default class Spider {
         }
     }
 
-    startTimerWithUrl(url) {
+    startTimerWithUrl(url,interval,baseDate) {
+        if (url && this.crawlTimers[url])
+        {
+            const crawlTimer = this.crawlTimers[url];
+            crawlTimer.update(interval);
+        }
+
         if (url && !this.crawlTimers[url]) {
-            const timer = new TimingCrawlTask(url, 12);
+            const timer = new TimingCrawlTask(url, interval, baseDate);
             this.crawlTimers[url] = timer;
             timer.start((crawlUrl) => {
                 StoreManager.instance().getRSSSource(null,crawlUrl, (feedObj) => {
@@ -112,12 +118,12 @@ export default class Spider {
                                     });
                                 }
                             } else {
-                                StoreManager.instance().getRSSSource(nil,crawlUrl, (feedObj) => {
+                                StoreManager.instance().getRSSSource(null,crawlUrl, (feedObj) => {
                                     if (feedObj) {
                                         const feedSource = feedObj.copy();
                                         feedSource.errTime = new Date();
                                         if (error) {
-                                            feedSource.errMsg = error.error.message;
+                                            feedSource.errMsg = error;
                                         } else {
                                             feedSource.errMsg = 'unkonwn';
                                         }

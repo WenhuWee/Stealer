@@ -9,8 +9,10 @@ export class FeedStoreModel {
     createdTime:Date;
     updatedTime:Date;
     lastVisitedDate:Date;
+    interval
 
     constructor(obj) {
+        this.interval = 12;
         if (typeof obj === 'object') {
             if (obj._id) {
                 this.id = obj._id;
@@ -21,6 +23,7 @@ export class FeedStoreModel {
                 this.errTime = obj.errTime;
                 this.lastVisitedDate = obj.lastVisitedDate;
                 this.updatedTime = obj.updatedTime;
+                this.interval = obj.interval;
             }
         }
         this.createdTime = new Date();

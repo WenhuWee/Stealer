@@ -7,14 +7,25 @@ export class TimingCrawlTask {
     nextTiming:Date;
     timer;
 
-    constructor(url, interval) {
+    constructor(url, interval,baseDate) {
         this.url = url;
+        const gap = interval ? interval : 12;
         if (process.env.NODE_ENV === 'production') {
-            const base = interval * 1000 * 60 * 60; // hour
-            const randomInterval = (Math.random() * (1.2 - 0.8) + 0.8) * base;
-            this.interval = randomInterval;
+            const base = gap * 1000 * 60 * 60; // hour
+            this.interval = base;
         } else {
-            this.interval = 10 * interval * 1000; // second
+            this.interval = 1 * gap * 1000; // second
+        }
+        if (baseDate) {
+            this.nextTiming = baseDate;
+        } else {
+            this.nextTiming = new Date();
+        }
+    }
+
+    update(interval) {
+        if (interval) {
+            this.interval = interval;
         }
     }
 
@@ -22,19 +33,23 @@ export class TimingCrawlTask {
         if (!callback) {
             return;
         }
-        const currentDate = new Date();
-        this.nextTiming = new Date(currentDate.getTime() + this.interval);
+        const randomInterval = (Math.random() * (1.1 - 0.9) + 0.9) * this.interval;
+        this.nextTiming = new Date(this.nextTiming.getTime() + randomInterval);
 
-        this.timer = setInterval(() => {
-            const currentDate2 = new Date();
-            this.nextTiming = new Date(currentDate2.getTime() + this.interval);
+        this.timer = setTimeout(() => {
             callback(this.url);
-        }, this.interval);
+            this.start(callback);
+        },randomInterval)
+
+        // this.timer = setInterval(() => {
+        //     this.nextTiming = new Date(Date.now() + this.interval);
+        //     callback(this.url);
+        // }, this.interval);
     }
 
     stop() {
         if (this.timer) {
-            clearInterval(this.timer);
+            clearTimeout(this.timer);
             this.timer = null;
         }
         this.nextTiming = null;

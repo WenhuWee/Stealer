@@ -194,6 +194,9 @@ export default class APIServer {
                     if (ele.errMsg) {
                         doc.errMsg = ele.errMsg;
                     }
+                    if (ele.interval) {
+                        doc.interval = ele.interval;
+                    }
                     if (ele.errTime) {
                         doc.errTime = ele.errTime;
                     }
@@ -319,7 +322,7 @@ export default class APIServer {
                     feedSource.xml = data;
                     feedSource.updatedTime = new Date();
                     StoreManager.instance().setRSSSource(feedSource);
-                    this.spider.startTimerWithUrl(url);
+                    this.spider.startTimerWithUrl(url,feedSource.interval,feedSource.updatedTime);
                     callback(data, null);
                 } else if (error) {
                     feedSource.errTime = new Date();

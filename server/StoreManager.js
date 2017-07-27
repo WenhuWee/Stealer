@@ -21,7 +21,7 @@ export default class StoreManager {
 
     init() {
         if (process.env.NODE_ENV !== 'production') {
-            this._clearDB();
+            // this._clearDB();
         }
 
         const appPath = Path.resolve('./');
@@ -54,16 +54,11 @@ export default class StoreManager {
         if (!callback) {
             return;
         }
-        const urls = [];
-        this.db.find({ }).projection({ url: 1 }).exec((err, docs) => {
+        this.db.find({ }).projection({ url: 1 , updatedTime: 1, interval:1}).exec((err, docs) => {
             if (!err) {
-                docs.forEach((ele) => {
-                    if (ele.url) {
-                        urls.push(ele.url);
-                    }
-                });
+                callback(docs);
             }
-            callback(urls);
+            callback([]);
         });
     }
 
