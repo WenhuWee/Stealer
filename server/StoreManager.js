@@ -108,12 +108,36 @@ export default class StoreManager {
         });
     }
 
+    updateTimerInterval(id:String,url:String,interval:Number,callback) {
+        if (!callback) {
+            return;
+        }
+        if ((!id && !url) || !interval) {
+            return;
+        }
+        let searchObj = {};
+        if (id) {
+            searchObj['_id'] = id;
+        }else if (url) {
+            searchObj['url'] = url;
+        }
+        this.db.update(searchObj, {$set:{interval:interval}}, {returnUpdatedDocs:true,multi:true}, (updateErr,updateNum, updateNewDocs) => {
+            if (updateNewDocs.length) {
+                const item = updateNewDocs[0];
+                const feedModel = new FeedStoreModel(item);
+                callback(updateErr,item);
+            } else {
+                callback(updateErr,null);
+            }
+        });
+    }
+
     setRSSSource(source:FeedStoreModel) {
         if (source instanceof FeedStoreModel && source.isValid()) {
             this.db.find({ _id: source.id }, (err, docs) => {
                 if (docs.length) {
                     const updateRes = source.generateStoreObjectWithoutID();
-                    this.db.update({ _id: source.id }, updateRes, {}, (updateErr, updateNewDocs) => {
+                    this.db.update({ _id: source.id }, {$set:updateRes}, {}, (updateErr, updateNewDocs) => {
                         if (updateNewDocs) {
 
                         }

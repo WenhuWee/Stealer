@@ -9,7 +9,7 @@ export class FeedStoreModel {
     createdTime:Date;
     updatedTime:Date;
     lastVisitedDate:Date;
-    interval
+    interval:Number;
 
     constructor(obj) {
         this.interval = 12;
@@ -23,7 +23,9 @@ export class FeedStoreModel {
                 this.errTime = obj.errTime;
                 this.lastVisitedDate = obj.lastVisitedDate;
                 this.updatedTime = obj.updatedTime;
-                this.interval = obj.interval;
+                if (obj.interval) {
+                    this.interval = obj.interval;
+                }
             }
         }
         this.createdTime = new Date();
@@ -53,6 +55,7 @@ export class FeedStoreModel {
             storeObj.createdTime = this.createdTime;
             storeObj.lastVisitedDate = this.lastVisitedDate;
             storeObj.updatedTime = this.updatedTime;
+            storeObj.interval = this.interval;
             return storeObj;
         } else {
             return null;
@@ -70,6 +73,7 @@ export class FeedStoreModel {
             storeObj.createdTime = this.createdTime;
             storeObj.lastVisitedDate = this.lastVisitedDate;
             storeObj.updatedTime = this.updatedTime;
+            storeObj.interval = this.interval;
             return storeObj;
         } else {
             return null;

@@ -25,7 +25,12 @@ export class TimingCrawlTask {
 
     update(interval) {
         if (interval) {
-            this.interval = interval;
+            if (process.env.NODE_ENV === 'production') {
+                const base = interval * 1000 * 60 * 60; // hour
+                this.interval = base;
+            } else {
+                this.interval = 1 * interval * 1000; // second
+            }
         }
     }
 
@@ -34,12 +39,20 @@ export class TimingCrawlTask {
             return;
         }
         const randomInterval = (Math.random() * (1.1 - 0.9) + 0.9) * this.interval;
-        this.nextTiming = new Date(this.nextTiming.getTime() + randomInterval);
+        let nextTiming = this.nextTiming.getTime() + randomInterval;
+        const nowTiming = Date.now();
+
+        while (nextTiming < nowTiming) {
+            nextTiming += randomInterval;
+        }
+
+        const timeOutInterval = nextTiming - nowTiming;
+        this.nextTiming = new Date(nextTiming);
 
         this.timer = setTimeout(() => {
             callback(this.url);
             this.start(callback);
-        },randomInterval)
+        },timeOutInterval);
 
         // this.timer = setInterval(() => {
         //     this.nextTiming = new Date(Date.now() + this.interval);

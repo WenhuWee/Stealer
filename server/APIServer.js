@@ -21,6 +21,9 @@ export default class APIServer {
             info: {
                 status: this.getCurrentStatus,
             },
+            update:{
+                interval: this.updateInterval,
+            },
             del: {
                 zhihu: this.delFeed,
                 weixin: this.delFeed,
@@ -338,6 +341,32 @@ export default class APIServer {
             },feedObj);
         } else {
             back(null, this.lackErrorResponse);
+        }
+    }
+
+    updateInterval(params, callback) {
+        const back = funcCheck(callback);
+        let url = params.url;
+        let id = params.id;
+        let interval = params.interval;
+        if (url) {
+            url = decodeURIComponent(url);
+        }
+        if ((url || id) && interval) {
+            StoreManager.instance().updateTimerInterval(id,url,interval, (err,feed) => {
+                if (!err) {
+                    if (feed && feed.url) {
+                        this.spider.startTimerWithUrl(feed.url,interval,null);
+                    }else if (url) {
+                        this.spider.startTimerWithUrl(url,interval,null);
+                    }
+                    callback(this.commonSuccessResponse);
+                } else {
+                    callback(this.commonErrorResponse);
+                }
+            });
+        } else {
+            back(this.commonErrorWithMsg('bad url'));
         }
     }
 
