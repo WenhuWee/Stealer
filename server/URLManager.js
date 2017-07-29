@@ -1,5 +1,6 @@
 
 import { URLTask, ParseTask } from '../Model/CrawlTask.js';
+import StoreManager from './StoreManager.js';
 
 const Http = require('http');
 const Https = require('https');
@@ -18,12 +19,24 @@ export default class URLManager {
             'zhuanlan.zhihu.com': {
                 '/': '',
             },
+            'weixin.sogou.com':{
+                '/': {'Cookie':'ABTEST=0|1501334532|v1; IPLOC=SG; SUID=08E1A6BC2930990A00000000597C8C04; PHPSESSID=8ktoa1f828jam7a58ntc18hg16; SUIR=1501334532; SUID=08E1A6BC2208990A00000000597C8C06; SUV=1501334540673968; SNUID=27D196932F35655B80CA7C70304366F0; JSESSIONID=aaaFONgTVzsfd8gKXz41v; sct=5; ld=DZllllllll2BKwCjlllllVOD0Uwllllls3bPjlllll9lllll4ylll5@@@@@@@@@@; weixinIndexVisited=1'}
+            }
         };
+
+        const manager = this;
+        StoreManager.instance().getCookies(null,null,(cookies)=>{
+            if (cookies){
+                cookies.forEach((cookie) =>{
+                    manager.updateCookies(cookie.host,cookie.path,cookie.cookies);
+                })
+            }
+        });
     }
 
     start(option) {
         if (option) {
-            this.currentOption = Object.assign({}, this.initialOption, option);
+            this.currentOption = Object.assign({}, this.initial:Option, option);
         } else {
             this.currentOption = Object.assign({}, this.initialOption);
         }
@@ -78,6 +91,10 @@ export default class URLManager {
         }
     }
 
+    updateCookies(host,path,cookies){
+        this._setDefaultHeader(host,path,{'Cookie':cookies});
+    }
+
     _getDefaultHeader(host, path) {
         let header = null;
         const hostRule = this.defaultHeader[host];
@@ -90,12 +107,32 @@ export default class URLManager {
         return header;
     }
 
+    _setDefaultHeader(host, path, header) {
+        if (!host || !path || !header) {
+            return;
+        }
+        let hostRule = this.defaultHeader[host];
+        if (!hostRule) {
+            hostRule = {'/':''};
+        }
+        let newHeader = hostRule[path];
+        if (newHeader) {
+            newHeader = Object.assign(header, newHeader);
+        } else {
+            newHeader = header;
+        }
+
+        hostRule[path] = newHeader;
+        this.defaultHeader[host] = hostRule;
+    }
+
     _requestURL(task, callback) {
         const url = Url.parse(task.url);
-        let headers = this._getDefaultHeader(url.host, url.path) || {};
+        let headers = this._getDefaultHeader(url.host, url.pathname) || {};
         if (task.header) {
             headers = Object.assign(headers, task.header);
         }
+        // console.log(headers);
 
         let requestObject = Http.request;
         let port = url.port || 80;
@@ -119,8 +156,16 @@ export default class URLManager {
         parseTask.url = task.url;
         parseTask.type = task.type;
 
+        const manager = this;
+
         const request = requestObject(options, (res) => {
             const body = [];
+            // const setcookie = res.headers["set-cookie"];
+            // if (setcookie) {
+            //     const cookieString = setcookie.join(';');
+            //     manager._setDefaultHeader(url.host,url.pathname,{'Cookie':cookieString});
+            //     StoreManager.instance().setCookies(url.host,url.pathname, cookieString);
+            // }
             res.on('data', (data) => {
                 body.push(data);
             });

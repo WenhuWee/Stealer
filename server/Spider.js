@@ -194,6 +194,10 @@ export default class Spider {
         });
     }
 
+    updateCookies(host,path,cookies){
+        this.URLManager.updateCookies(host,path,cookies);
+    }
+
     logWithTasks(tasks) {
         if (Array.isArray(tasks)) {
             tasks.forEach((ele) => {
