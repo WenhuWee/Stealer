@@ -238,7 +238,7 @@ export default class APIServer {
                 if (process.env.NODE_ENV !== 'production') {
                     generateInterval = 10 * 1000;
                 }
-                shouldLoadFeed = !feedObj || (feedObj.errTime && currentDate - feedObj.errTime > generateInterval)
+                shouldLoadFeed = !feedObj || (!feedObj.xml && feedObj.errTime && currentDate - feedObj.errTime > generateInterval)
             }
 
             const lastDate = feedObj ? feedObj.lastItemDate : null;
@@ -305,7 +305,7 @@ export default class APIServer {
         if (url && id) {
             const feedObj = new FeedObject();
             feedObj.lastItemDate = lastItemDate;
-            this.spider.crawlUrl(url, (feed, err) => {
+            this.spider.crawlUrl(url,feedObj, (feed, err) => {
                 let data = null;
                 let error = null;
                 if (err) {
@@ -339,7 +339,7 @@ export default class APIServer {
                 } else {
                     callback(null, this.commonErrorWithMsg('unknown'));
                 }
-            },feedObj);
+            });
         } else {
             back(null, this.lackErrorResponse);
         }

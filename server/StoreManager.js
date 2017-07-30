@@ -22,7 +22,7 @@ export default class StoreManager {
 
     init() {
         if (process.env.NODE_ENV !== 'production') {
-            // this._clearDB();
+            this._clearDB();
         }
 
         const appPath = Path.resolve('./');
@@ -144,7 +144,7 @@ export default class StoreManager {
             this.db.find({ _id: source.id }, (err, docs) => {
                 if (docs.length) {
                     const updateRes = source.generateStoreObjectWithoutID();
-                    this.db.update({ _id: source.id }, {$set:updateRes}, {}, (updateErr, updateNewDocs) => {
+                    this.db.update({ _id: source.id }, updateRes, {}, (updateErr, updateNewDocs) => {
                         if (updateNewDocs) {
 
                         }

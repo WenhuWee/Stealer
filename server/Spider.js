@@ -95,7 +95,9 @@ export default class Spider {
                     } else {
                         devLog('------timer--------');
                         devLog(crawlUrl);
-                        this.crawlUrl(crawlUrl, (feed, error) => {
+                        const feedObject = new FeedObject();
+                        feedObject.lastItemDate = feedObj.lastItemDate;
+                        this.crawlUrl(crawlUrl,feedObject,(feed, error) => {
                             devLog(error);
                             if (feed) {
                                 const xml = feed.generateRSSXML();
@@ -105,7 +107,7 @@ export default class Spider {
                                     feedModel.url = crawlUrl;
                                     feedModel.xml = xml;
                                     feedModel.updatedTime = new Date();
-
+                                    feedModel.lastItemDate = feed.lastItemDate;
                                     StoreManager.instance().setRSSSource(feedModel);
                                 } else {
                                     StoreManager.instance().getRSSSource(feed.id,crawlUrl, (feedObj) => {
@@ -138,13 +140,13 @@ export default class Spider {
         }
     }
 
-    crawlUrl(target, callback, prevFeed = null) {
+    crawlUrl(target, prevFeed, callback) {
         const urlTasks = URLManager.urlTasksFromURL(target);
-        this.crawlURLTasks(urlTasks, callback, prevFeed);
+        this.crawlURLTasks(urlTasks, prevFeed, callback);
     }
 
 
-    crawlURLTasks(tasks, callback, prevFeed = null) {
+    crawlURLTasks(tasks, prevFeed, callback) {
         // if (firstTry) {
         //     firstTry = false;
         //     callback(null, Error('random error'));
@@ -174,7 +176,7 @@ export default class Spider {
                             mergedFeed = new FeedObject();
                         }
                         mergedFeed = mergedFeed.merge(feed);
-                        this.crawlURLTasks(urlTasks, callback, mergedFeed);
+                        this.crawlURLTasks(urlTasks, mergedFeed, callback);
                     } else if (feed) {
                         let mergedFeed2 = prevFeed;
                         if (!mergedFeed2) {

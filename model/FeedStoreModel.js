@@ -4,12 +4,12 @@ export class FeedStoreModel {
     url: string;
     xml: string;
     lastItemDate:Date;
-    errMsg:string;
-    errTime:Date;
-    createdTime:Date;
     updatedTime:Date;
     lastVisitedDate:Date;
     interval:Number;
+
+    errMsg:string;
+    errTime:Date;
 
     constructor(obj) {
         this.interval = 12;
@@ -28,7 +28,6 @@ export class FeedStoreModel {
                 }
             }
         }
-        this.createdTime = new Date();
     }
 
     isValid() {
@@ -52,7 +51,6 @@ export class FeedStoreModel {
             storeObj.lastItemDate = this.lastItemDate;
             storeObj.errMsg = this.errMsg;
             storeObj.errTime = this.errTime;
-            storeObj.createdTime = this.createdTime;
             storeObj.lastVisitedDate = this.lastVisitedDate;
             storeObj.updatedTime = this.updatedTime;
             storeObj.interval = this.interval;
@@ -70,7 +68,6 @@ export class FeedStoreModel {
             storeObj.lastItemDate = this.lastItemDate;
             storeObj.errMsg = this.errMsg;
             storeObj.errTime = this.errTime;
-            storeObj.createdTime = this.createdTime;
             storeObj.lastVisitedDate = this.lastVisitedDate;
             storeObj.updatedTime = this.updatedTime;
             storeObj.interval = this.interval;
