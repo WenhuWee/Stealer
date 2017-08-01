@@ -140,7 +140,8 @@ export default class ContentParser {
             const feed = new FeedObject();
             feed.title = `知乎专栏-${res.name}`;
             feed.description = res.description;
-            feed.id = `https://zhuanlan.zhihu.com${res.url}`;
+            // feed.id = `https://zhuanlan.zhihu.com${res.url}`;
+            feed.id = `zhihu_${res.slug}`;
             feed.link = `https://zhuanlan.zhihu.com${res.url}`;
             parseTask.feed = feed;
         }

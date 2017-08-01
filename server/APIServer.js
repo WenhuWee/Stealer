@@ -281,8 +281,9 @@ export default class APIServer {
         const name = params.name;
         const isForced = params.forced;
         if (name) {
+            const id = 'zhihu_' + name;
             const url = `https://zhuanlan.zhihu.com/${name}`;
-            this.getFeed(name,url,isForced,back);
+            this.getFeed(id,url,isForced,back);
         } else {
             back(this.commonErrorWithMsg('bad name'));
         }
