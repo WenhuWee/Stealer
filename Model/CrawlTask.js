@@ -2,12 +2,14 @@
 import { FeedObject, FeedItemObject } from './FeedObject.js';
 
 export class TimingCrawlTask {
+    id: String;
     url:string;
     interval:number;
     nextTiming:Date;
     timer;
 
-    constructor(url, interval,baseDate) {
+    constructor(id,url, interval,baseDate) {
+        this.id = id;
         this.url = url;
         const gap = interval ? interval : 12;
         if (process.env.NODE_ENV === 'production') {
@@ -50,7 +52,7 @@ export class TimingCrawlTask {
         this.nextTiming = new Date(nextTiming);
 
         this.timer = setTimeout(() => {
-            callback(this.url);
+            callback(this.id,this.url);
             this.start(callback);
         },timeOutInterval);
 

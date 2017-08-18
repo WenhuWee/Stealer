@@ -23,11 +23,11 @@ export default class Spider {
         this.crawlTimers = {};
         this.timeOutTimes = {};
 
-        StoreManager.instance().getAllURL((feeds) => {
+        StoreManager.instance().getAllDocs((feeds) => {
             if (Array.isArray(feeds) && feeds.length) {
                 feeds.forEach((ele, index) => {
                     const timer = setTimeout((feed) => {
-                        this.startTimerWithUrl(feed.url,feed.interval,feed.updatedTime);
+                        this.startTimerWithUrl(feed.id,feed.url,feed.interval,feed.updatedTime);
                         if (this.timeOutTimes[feed.url]) {
                             delete this.timeOutTimes[feed.url];
                         }
@@ -72,7 +72,7 @@ export default class Spider {
         }
     }
 
-    startTimerWithUrl(url,interval,baseDate) {
+    startTimerWithUrl(id,url,interval,baseDate) {
         if (url && this.crawlTimers[url])
         {
             const crawlTimer = this.crawlTimers[url];
@@ -80,12 +80,13 @@ export default class Spider {
         }
 
         if (url && !this.crawlTimers[url]) {
-            const timer = new TimingCrawlTask(url, interval, baseDate);
+            const timer = new TimingCrawlTask(id,url, interval, baseDate);
             this.crawlTimers[url] = timer;
-            timer.start((crawlUrl) => {
-                StoreManager.instance().getRSSSource(null,crawlUrl, (feedObj) => {
+            timer.start((id,crawlUrl) => {
+                StoreManager.instance().getRSSSource(id,crawlUrl, (feedObj) => {
                     const currentDateTime = Date.now();
-                    const gap = 3 * 24 * 60 * 60 * 1000;
+                    const gap = 1 * 24 * 60 * 60 * 1000;
+                    // const gap = 30 * 1000;
                     if (feedObj && feedObj.lastVisitedDate && currentDateTime - feedObj.lastVisitedDate.getTime() > gap) {
                         StoreManager.instance().delRSSSource(feedObj.id,null, (err,feed) => {
                             if (!err && feed.url) {
@@ -111,7 +112,7 @@ export default class Spider {
                                     feedModel.lastItemDate = feed.lastItemDate;
                                     StoreManager.instance().setRSSSource(feedModel);
                                 } else {
-                                    StoreManager.instance().getRSSSource(feed.id,crawlUrl, (feedObj) => {
+                                    StoreManager.instance().getRSSSource(id,crawlUrl, (feedObj) => {
                                         if (feedObj) {
                                             const feedSource = feedObj.copy();
                                             feedSource.errTime = new Date();
@@ -121,7 +122,7 @@ export default class Spider {
                                     });
                                 }
                             } else {
-                                StoreManager.instance().getRSSSource(null,crawlUrl, (feedObj) => {
+                                StoreManager.instance().getRSSSource(id,crawlUrl, (feedObj) => {
                                     if (feedObj) {
                                         const feedSource = feedObj.copy();
                                         feedSource.errTime = new Date();

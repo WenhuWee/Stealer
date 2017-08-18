@@ -15,16 +15,24 @@ export class FeedStoreModel {
     constructor(obj) {
         this.interval = 12;
         if (typeof obj === 'object') {
-            if (obj._id) {
-                this.id = obj._id;
+            if (obj.id) {
+                this.id = obj.id;
                 this.title = obj.title;
                 this.url = obj.url;
                 this.xml = obj.xml;
-                this.lastItemDate = obj.lastItemDate;
+                if (obj.lastItemDate) {
+                    this.lastItemDate = new Date(obj.lastItemDate);
+                }
                 this.errMsg = obj.errMsg;
-                this.errTime = obj.errTime;
-                this.lastVisitedDate = obj.lastVisitedDate;
-                this.updatedTime = obj.updatedTime;
+                if (obj.errTime) {
+                    this.errTime = new Date(obj.errTime);
+                }
+                if (obj.lastVisitedDate) {
+                    this.lastVisitedDate = new Date(obj.lastVisitedDate);
+                }
+                if (obj.updatedTime) {
+                    this.updatedTime = new Date(obj.updatedTime);
+                }
                 if (obj.interval) {
                     this.interval = obj.interval;
                 }
@@ -47,37 +55,44 @@ export class FeedStoreModel {
 
     generateStoreObjectWithID() {
         if (this.id) {
-            const storeObj = { _id: this.id };
-            storeObj.url = this.url;
-            storeObj.title = this.title;
-            storeObj.xml = this.xml;
-            storeObj.lastItemDate = this.lastItemDate;
-            storeObj.errMsg = this.errMsg;
-            storeObj.errTime = this.errTime;
-            storeObj.lastVisitedDate = this.lastVisitedDate;
-            storeObj.updatedTime = this.updatedTime;
-            storeObj.interval = this.interval;
-            return storeObj;
+            const feed = {};
+            const keys = Object.keys(this);
+            keys.forEach((key) => {
+                feed[key] = this[key];
+            });
+            return feed;
         } else {
             return null;
         }
     }
 
-    generateStoreObjectWithoutID() {
+    generateStoreObjectWithoutXML() {
         if (this.id) {
-            const storeObj = {};
-            storeObj.url = this.url;
-            storeObj.title = this.title;
-            storeObj.xml = this.xml;
-            storeObj.lastItemDate = this.lastItemDate;
-            storeObj.errMsg = this.errMsg;
-            storeObj.errTime = this.errTime;
-            storeObj.lastVisitedDate = this.lastVisitedDate;
-            storeObj.updatedTime = this.updatedTime;
-            storeObj.interval = this.interval;
-            return storeObj;
+            const feed = {};
+            const keys = Object.keys(this);
+            keys.forEach((key) => {
+                if (key !== 'xml') {
+                    feed[key] = this[key];
+                }
+            });
+            return feed;
         } else {
             return null;
+        }
+    }
+
+    merge(newFeed:FeedStoreModel, exceptProp:Object = {}) {
+        if (newFeed instanceof FeedStoreModel && this.id === newFeed.id) {
+            const mergedFeed = this.copy();
+            const keys = Object.keys(newFeed);
+            keys.forEach((key) => {
+                if (!exceptProp[key]) {
+                    mergedFeed[key] = newFeed[key];
+                }
+            });
+            return mergedFeed;
+        } else {
+            return this.copy();
         }
     }
 }

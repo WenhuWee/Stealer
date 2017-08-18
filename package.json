@@ -103,6 +103,7 @@
     "body-parser": "^1.15.2",
     "feed": "^0.3.0",
     "immutable": "^3.8.1",
+    "level": "^1.7.0",
     "nedb": "^1.8.0",
     "validator": "^6.2.0"
   }

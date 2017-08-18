@@ -5,6 +5,7 @@ import { FeedStoreModel } from '../model/FeedStoreModel';
 const Path = require('path');
 const Nedb = require('nedb');
 const FS = require('fs');
+const LevelDB = require('levelup');
 
 let instance = null;
 
@@ -22,13 +23,13 @@ export default class StoreManager {
 
     init() {
         if (process.env.NODE_ENV !== 'production') {
-            this._clearDB();
+            // this._clearDB();
         }
 
         const appPath = Path.resolve('./');
         const dirPath = Path.join(appPath, 'data');
         const dbPath = Path.join(dirPath, `${filePrefix}db`);
-        this.db = new Nedb({ filename: dbPath, autoload: true });
+        this.leveldb = new LevelDB(dbPath);
 
         const cookiesdbPath = Path.join(dirPath, `${cookiesFilePrefix}db`);
         this.cookiesdb = new Nedb({ filename: cookiesdbPath, autoload: true });
@@ -40,8 +41,9 @@ export default class StoreManager {
         const appPath = Path.resolve('./');
         const dirPath = Path.join(appPath, 'data');
         const dbPath = Path.join(dirPath, `${filePrefix}db`);
-        FS.unlink(dbPath, () => {
-        });
+
+        const rimraf = require('rimraf');
+        rimraf.sync(dbPath);
 
         const cookiesdbPath = Path.join(dirPath, `${cookiesFilePrefix}db`);
         FS.unlink(cookiesdbPath, () => {
@@ -52,21 +54,21 @@ export default class StoreManager {
         if (!callback) {
             return;
         }
-        this.db.find({}, (err, docs) => {
-            callback(docs);
-        });
-    }
-
-    getAllURL(callback) {
-        if (!callback) {
-            return;
-        }
-        this.db.find({ }).projection({ url: 1 , updatedTime: 1, interval:1}).exec((err, docs) => {
-            if (!err) {
-                callback(docs);
-            }
-            callback([]);
-        });
+        const res = [];
+        this.leveldb.createReadStream()
+            .on('data', function (data) {
+                const valueObj = safeJSONParse(data.value);
+                const oldSource = new FeedStoreModel(valueObj);
+                res.push(oldSource);
+            })
+            .on('error', function (err) {
+                callback(res);
+            })
+            .on('close', function () {
+            })
+            .on('end', function () {
+                callback(res);
+            });
     }
 
     delRSSSource(id:string, url:string, callback) {
@@ -78,41 +80,31 @@ export default class StoreManager {
             return;
         }
 
-        let searchObj = {};
-        if (id) {
-            searchObj['_id'] = id;
-        }else if (url) {
-            searchObj['url'] = url;
-        }
-
-        this.db.find(searchObj, (err, docs) => {
-            if (docs.length) {
-                const item = docs[0];
-                const feedModel = new FeedStoreModel(item);
-                this.db.remove({'_id':feedModel.id}, {}, (err) => {
-                    callback(err,feedModel);
+        this.getRSSSource(id,url,(source)=>{
+            if (source && source.id) {
+                this.leveldb.del(source.id, function (err) {
+                    callback(err,source);
                 });
             } else {
                 callback(Error('no Item'),null);
             }
-        });
+        })
     }
 
     updateLastVisitedDate(id:String,url:String,lastVisitedDate:Date) {
         if ((!id && !url) || !lastVisitedDate) {
             return;
         }
-        let searchObj = {};
-        if (id) {
-            searchObj['_id'] = id;
-        }else if (url) {
-            searchObj['url'] = url;
-        }
-        this.db.update(searchObj, {$set:{lastVisitedDate:lastVisitedDate}}, {}, (updateErr, updateNewDocs) => {
-            if (updateNewDocs) {
 
-            }
-        });
+        const source = new FeedStoreModel();
+        source.id = id;
+        if (!id) {
+            source.id = url;
+        }
+        source.url = url;
+        source.lastVisitedDate = lastVisitedDate;
+
+        this.setRSSSource(source);
     }
 
     updateTimerInterval(id:String,url:String,interval:Number,callback) {
@@ -122,59 +114,62 @@ export default class StoreManager {
         if ((!id && !url) || !interval) {
             return;
         }
-        let searchObj = {};
-        if (id) {
-            searchObj['_id'] = id;
-        }else if (url) {
-            searchObj['url'] = url;
+
+        const source = new FeedStoreModel();
+        source.id = id;
+        if (!id) {
+            source.id = url;
         }
-        this.db.update(searchObj, {$set:{interval:interval}}, {returnUpdatedDocs:true,multi:true}, (updateErr,updateNum, updateNewDocs) => {
-            if (updateNewDocs.length) {
-                const item = updateNewDocs[0];
-                const feedModel = new FeedStoreModel(item);
-                callback(updateErr,item);
-            } else {
-                callback(updateErr,null);
-            }
-        });
+        if (url) {
+            source.url = url;
+        }
+        source.interval = interval;
+
+        this.setRSSSource(source,(err,source) =>{
+            callback(err,source);
+        })
     }
 
-    setRSSSource(source:FeedStoreModel) {
+    setRSSSource(source:FeedStoreModel,callback) {
         if (source instanceof FeedStoreModel && source.isValid()) {
-            this.db.find({ _id: source.id }, (err, docs) => {
-                if (docs.length) {
-                    const updateRes = source.generateStoreObjectWithoutID();
-                    this.db.update({ _id: source.id }, updateRes, {}, (updateErr, updateNewDocs) => {
-                        if (updateNewDocs) {
+            const leveldb = this.leveldb;
 
-                        }
-                    });
-                } else {
-                    const insertRes = source.generateStoreObjectWithID();
-                    this.db.insert(insertRes, (insertErr, insertNewDocs) => {
-                        if (insertNewDocs) {
-
-                        }
-                    });
+            this.leveldb.get(source.id, function (err, value) {
+                let mergedSource = source;
+                if (value) {
+                    const valueObj = safeJSONParse(value);
+                    const oldSource = new FeedStoreModel(valueObj);
+                    mergedSource = oldSource.merge(mergedSource);
                 }
-            });
+                const res = mergedSource.generateStoreObjectWithID();
+                const resJson = JSON.stringify(res)
+                leveldb.put(source.id, resJson, function (err) {
+                    if (callback) {
+                        callback(err,mergedSource);
+                    }
+                })
+            })
         }
     }
 
     getRSSSource(id,url, callback) {
-        if (callback && this.db && (id || url)) {
-          let searchObj = {};
-          if (id) {
+        if (callback && (id || url)) {
+            let searchObj = {};
+            if (id) {
               searchObj['_id'] = id;
-          }else if (url) {
+            }else if (url) {
               searchObj['url'] = url;
-          }
+            }
+            let identifier = id;
+            if (!identifier) {
+                identifier = url;
+            }
 
-            this.db.find(searchObj, (err, docs) => {
-                if (docs.length) {
-                    const item = docs[0];
-                    const feedModel = new FeedStoreModel(item);
-                    callback(feedModel);
+            this.leveldb.get(identifier, function (err, value) {
+                if (value) {
+                    const valueObj = safeJSONParse(value);
+                    const oldSource = new FeedStoreModel(valueObj);
+                    callback(oldSource);
                 } else {
                     callback(null);
                 }

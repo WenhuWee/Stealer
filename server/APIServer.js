@@ -184,28 +184,14 @@ export default class APIServer {
             if (Array.isArray(docs)) {
                 res.dbDocs = [];
                 docs.forEach((ele) => {
-                    const doc = {};
-                    if (ele._id) {
-                        doc.id = ele._id;
-                    }
-
-                    doc.title = ele.title;
+                    const doc = ele.generateStoreObjectWithoutXML();
 
                     if (ele.lastItemDate) {
                         doc.lastItemDate = ele.lastItemDate.toLocaleString('en-US', { timeZone: 'Asia/Shanghai' });
                     }
 
-                    if (ele.url) {
-                        doc.url = ele.url;
-                    }
-                    if (ele.errMsg) {
-                        doc.errMsg = ele.errMsg;
-                    }
-                    if (ele.interval) {
-                        doc.interval = ele.interval;
-                    }
                     if (ele.errTime) {
-                        doc.errTime = ele.errTime;
+                        doc.errTime = ele.errTime.toLocaleString('en-US', { timeZone: 'Asia/Shanghai' });
                     }
                     if (ele.lastVisitedDate) {
                         doc.lastVisitedDate = ele.lastVisitedDate.toLocaleString('en-US', { timeZone: 'Asia/Shanghai' });
@@ -331,7 +317,7 @@ export default class APIServer {
                     feedSource.xml = data;
                     feedSource.updatedTime = new Date();
                     StoreManager.instance().setRSSSource(feedSource);
-                    this.spider.startTimerWithUrl(url,feedSource.interval,feedSource.updatedTime);
+                    this.spider.startTimerWithUrl(id,url,feedSource.interval,feedSource.updatedTime);
                     callback(data, null);
                 } else if (error) {
                     feedSource.errTime = new Date();
@@ -362,9 +348,9 @@ export default class APIServer {
             StoreManager.instance().updateTimerInterval(id,url,interval, (err,feed) => {
                 if (!err) {
                     if (feed && feed.url) {
-                        this.spider.startTimerWithUrl(feed.url,interval,null);
+                        this.spider.startTimerWithUrl(feed.id,feed.url,interval,null);
                     }else if (url) {
-                        this.spider.startTimerWithUrl(url,interval,null);
+                        this.spider.startTimerWithUrl(id,url,interval,null);
                     }
                     callback(this.commonSuccessResponse);
                 } else {
