@@ -97,6 +97,7 @@ export class FeedObject {
             feed.addItem({
                 title: ele.title,
                 id: itemid,
+                guid: itemid,
                 link: ele.link,
                 date: ele.date,
                 content: ele.content,
