@@ -188,6 +188,9 @@ export default class APIServer {
                     if (ele._id) {
                         doc.id = ele._id;
                     }
+
+                    doc.title = ele.title;
+
                     if (ele.lastItemDate) {
                         doc.lastItemDate = ele.lastItemDate.toLocaleString('en-US', { timeZone: 'Asia/Shanghai' });
                     }
@@ -323,6 +326,7 @@ export default class APIServer {
                 feedSource.url = url;
                 if (data) {
                     devLog('From Real Time');
+                    feedSource.title = feed.title;
                     feedSource.lastItemDate = feed.lastItemDate;
                     feedSource.xml = data;
                     feedSource.updatedTime = new Date();

@@ -124,7 +124,7 @@ export default class ContentParser {
                     }
                     const item = new FeedItemObject();
                     item.title = ele.title;
-                    item.id = `https://zhuanlan.zhihu.com${ele.url}`;
+                    item.id = utils.MD5(`https://zhuanlan.zhihu.com${ele.url}`);
                     item.mergeID = `https://zhuanlan.zhihu.com${ele.url}`;
                     item.link = `https://zhuanlan.zhihu.com${ele.url}`;
                     item.date = new Date(ele.publishedTime);

@@ -1,6 +1,7 @@
 
 export class FeedStoreModel {
     id: string;
+    title: String;
     url: string;
     xml: string;
     lastItemDate:Date;
@@ -16,6 +17,7 @@ export class FeedStoreModel {
         if (typeof obj === 'object') {
             if (obj._id) {
                 this.id = obj._id;
+                this.title = obj.title;
                 this.url = obj.url;
                 this.xml = obj.xml;
                 this.lastItemDate = obj.lastItemDate;
@@ -47,6 +49,7 @@ export class FeedStoreModel {
         if (this.id) {
             const storeObj = { _id: this.id };
             storeObj.url = this.url;
+            storeObj.title = this.title;
             storeObj.xml = this.xml;
             storeObj.lastItemDate = this.lastItemDate;
             storeObj.errMsg = this.errMsg;
@@ -64,6 +67,7 @@ export class FeedStoreModel {
         if (this.id) {
             const storeObj = {};
             storeObj.url = this.url;
+            storeObj.title = this.title;
             storeObj.xml = this.xml;
             storeObj.lastItemDate = this.lastItemDate;
             storeObj.errMsg = this.errMsg;

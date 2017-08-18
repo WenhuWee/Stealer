@@ -105,6 +105,7 @@ export default class Spider {
                                     const feedModel = new FeedStoreModel();
                                     feedModel.id = feed.id;
                                     feedModel.url = crawlUrl;
+                                    feedModel.title = feed.title;
                                     feedModel.xml = xml;
                                     feedModel.updatedTime = new Date();
                                     feedModel.lastItemDate = feed.lastItemDate;
