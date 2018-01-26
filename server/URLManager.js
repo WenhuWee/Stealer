@@ -95,6 +95,14 @@ export default class URLManager {
         this._setDefaultHeader(host,path,{'Cookie':cookies});
     }
 
+    requestURL(url,callback){
+        const contentTask = new URLTask();
+        contentTask.url = url;
+        this._requestURL(contentTask, (newTask) => {
+            callback(newTask.error, newTask.content);
+        });
+    }
+
     _getDefaultHeader(host, path) {
         let header = null;
         const hostRule = this.defaultHeader[host];
