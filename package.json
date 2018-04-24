@@ -103,7 +103,11 @@
     "body-parser": "^1.15.2",
     "feed": "^0.3.0",
     "immutable": "^3.8.1",
+    "jimp": "^0.2.28",
+    "keras-js": "^1.0.3",
     "level": "^1.7.0",
+    "ndarray": "^1.0.18",
+    "ndarray-ops": "^1.2.2",
     "nedb": "^1.8.0",
     "validator": "^6.2.0"
   }
