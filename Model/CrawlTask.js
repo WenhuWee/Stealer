@@ -2,11 +2,6 @@
 import { FeedObject, FeedItemObject } from './FeedObject.js';
 
 export class TimingCrawlTask {
-    id: String;
-    url:string;
-    interval:number;
-    nextTiming:Date;
-    timer;
 
     constructor(id,url, interval,baseDate) {
         this.id = id;
@@ -72,10 +67,6 @@ export class TimingCrawlTask {
 }
 
 export class URLTask {
-    url:string;
-    header:string;
-    type:string;
-    error:Object;
 
     copy() {
         const task = new URLTask();
@@ -88,11 +79,6 @@ export class URLTask {
 }
 
 export class ParseTask {
-    url:string;
-    type:string;
-    content:Object;
-    error:Object;
-    feed:FeedObject;
 
     copy() {
         const task = new ParseTask();

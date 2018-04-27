@@ -120,14 +120,6 @@ export class FeedObject {
 }
 
 export class FeedItemObject {
-    title: string;
-    id: string;
-    mergeID: string;
-    link: string;
-    date: Date;
-    content: string;
-    authorName: string;
-    authorLink: string;
 
     copy() {
         const feed = new FeedItemObject();

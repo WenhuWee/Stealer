@@ -5,7 +5,7 @@ import { FeedStoreModel } from '../model/FeedStoreModel';
 const Path = require('path');
 const Nedb = require('nedb');
 const FS = require('fs');
-const LevelDB = require('levelup');
+const LevelDB = require('level');
 
 let instance = null;
 
@@ -71,7 +71,7 @@ export default class StoreManager {
             });
     }
 
-    delRSSSource(id:string, url:string, callback) {
+    delRSSSource(id, url, callback) {
         if (!callback) {
             return;
         }
@@ -80,18 +80,18 @@ export default class StoreManager {
             return;
         }
 
-        this.getRSSSource(id,url,(source)=>{
+        this.getRSSSource(id, url, (source)=>{
             if (source && source.id) {
                 this.leveldb.del(source.id, function (err) {
-                    callback(err,source);
+                    callback(err, source);
                 });
             } else {
-                callback(Error('no Item'),null);
+                callback(Error('no Item'), null);
             }
         });
     }
 
-    updateLastVisitedDate(id:String,url:String,lastVisitedDate:Date) {
+    updateLastVisitedDate(id, url, lastVisitedDate) {
         if ((!id && !url) || !lastVisitedDate) {
             return;
         }
@@ -107,7 +107,7 @@ export default class StoreManager {
         this.setRSSSource(source);
     }
 
-    updateTimerInterval(id:String,url:String,interval:Number,callback) {
+    updateTimerInterval(id, url, interval, callback) {
         if (!callback) {
             return;
         }
@@ -125,12 +125,12 @@ export default class StoreManager {
         }
         source.interval = interval;
 
-        this.setRSSSource(source,(err,source) =>{
-            callback(err,source);
+        this.setRSSSource(source, (err, source) =>{
+            callback(err, source);
         })
     }
 
-    setRSSSource(source:FeedStoreModel,callback) {
+    setRSSSource(source, callback) {
         if (source instanceof FeedStoreModel && source.isValid()) {
             const leveldb = this.leveldb;
 
@@ -145,14 +145,14 @@ export default class StoreManager {
                 const resJson = JSON.stringify(res)
                 leveldb.put(source.id, resJson, function (err) {
                     if (callback) {
-                        callback(err,mergedSource);
+                        callback(err, mergedSource);
                     }
                 })
             })
         }
     }
 
-    getRSSSource(id,url, callback) {
+    getRSSSource(id, url, callback) {
         if (callback && (id || url)) {
             let searchObj = {};
             if (id) {
@@ -177,7 +177,7 @@ export default class StoreManager {
         }
     }
 
-    getCookies(host,pathName,callback){
+    getCookies(host, pathName, callback){
         if (callback) {
             const searchObj = {};
             if (host && pathName) {
@@ -194,10 +194,10 @@ export default class StoreManager {
         }
     }
 
-    setCookies(host,pathName,cookies) {
+    setCookies(host, pathName, cookies) {
         if (host && pathName && cookies) {
             const id = `${host}${pathName}`;
-            const insertRes = {'_id':id,'host':host,'path':pathName,'cookies':cookies};
+            const insertRes = {'_id':id, 'host':host, 'path':pathName, 'cookies':cookies};
             this.cookiesdb.insert(insertRes, (insertErr, insertNewDocs) => {
                 if (insertNewDocs) {
 

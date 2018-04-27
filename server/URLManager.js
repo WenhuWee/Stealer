@@ -36,7 +36,7 @@ export default class URLManager {
 
     start(option) {
         if (option) {
-            this.currentOption = Object.assign({}, this.initial:Option, option);
+            this.currentOption = Object.assign({}, this.initialOption, option);
         } else {
             this.currentOption = Object.assign({}, this.initialOption);
         }
@@ -148,15 +148,13 @@ export default class URLManager {
             requestObject = Https.request;
             port = url.port || 443;
         }
+        headers.host = url.host;
+        headers['User-Agent'] = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:57.0) Gecko/20100101 Firefox/57.0';
         const options = {
             hostname: url.host,
             port,
             path: url.path,
-            headers: {
-                ...headers,
-                host: url.host,
-                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:57.0) Gecko/20100101 Firefox/57.0',
-            },
+            headers: headers,
         };
 
 

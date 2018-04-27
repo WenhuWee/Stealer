@@ -1,16 +1,5 @@
 
 export class FeedStoreModel {
-    id: string;
-    title: String;
-    url: string;
-    xml: string;
-    lastItemDate:Date;
-    updatedTime:Date;
-    lastVisitedDate:Date;
-    interval:Number;
-
-    errMsg:string;
-    errTime:Date;
 
     constructor(obj) {
         this.interval = 12;
@@ -81,7 +70,7 @@ export class FeedStoreModel {
         }
     }
 
-    merge(newFeed:FeedStoreModel, exceptProp:Object = {}) {
+    merge(newFeed, exceptProp = {}) {
         if (newFeed instanceof FeedStoreModel && this.id === newFeed.id) {
             const mergedFeed = this.copy();
             const keys = Object.keys(newFeed);

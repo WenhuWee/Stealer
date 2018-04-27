@@ -2,11 +2,11 @@ const path = require('path');
 const autoprefixer = require('autoprefixer');
 const postcssImport = require('postcss-import');
 const merge = require('webpack-merge');
+const ExtractTextPlugin = require('extract-text-webpack-plugin');
 
 const development = require('./dev.config');
 const production = require('./prod.config');
 
-require('babel-polyfill').default;
 
 const TARGET = process.env.npm_lifecycle_event;
 
@@ -18,9 +18,9 @@ const PATHS = {
 process.env.BABEL_ENV = TARGET;
 
 const common = {
-    entry: [
-        PATHS.app,
-    ],
+    entry: {
+        main: PATHS.app,
+    },
 
     output: {
         path: PATHS.build,
@@ -28,30 +28,19 @@ const common = {
     },
 
     resolve: {
-        extensions: ['', '.jsx', '.js', '.json', '.scss'],
-        modulesDirectories: ['node_modules', PATHS.app],
+        modules: [
+            'node_modules',
+            PATHS.app,
+        ],
+        extensions: ['.jsx', '.js', '.json', '.scss'],
     },
 
+    plugins: [
+        // new ExtractTextPlugin('[name].bundle.css'),
+    ],
+
     module: {
-        loaders: [{
-            test: /\.woff(\?v=\d+\.\d+\.\d+)?$/,
-            loader: 'url?limit=10000&mimetype=application/font-woff',
-        }, {
-            test: /\.woff2(\?v=\d+\.\d+\.\d+)?$/,
-            loader: 'url?limit=10000&mimetype=application/font-woff2',
-        }, {
-            test: /\.ttf(\?v=\d+\.\d+\.\d+)?$/,
-            loader: 'url?limit=10000&mimetype=application/octet-stream',
-        }, {
-            test: /\.otf(\?v=\d+\.\d+\.\d+)?$/,
-            loader: 'url?limit=10000&mimetype=application/font-otf',
-        }, {
-            test: /\.eot(\?v=\d+\.\d+\.\d+)?$/,
-            loader: 'file',
-        }, {
-            test: /\.svg(\?v=\d+\.\d+\.\d+)?$/,
-            loader: 'url?limit=10000&mimetype=image/svg+xml',
-        }, {
+        rules: [{
             test: /\.jsx$/,
             loaders: ['babel-loader'],
             exclude: /node_modules/,
@@ -66,21 +55,26 @@ const common = {
             test: /\.jpg$/,
             loader: 'file?name=[name].[ext]',
         }, {
+            test: /\.scss$/,
+            // use: ExtractTextPlugin.extract({
+                // fallback: 'style-loader',
+                use: [
+                    'css-loader',
+                    'sass-loader',
+                ],
+            // }),
+        }, {
             test: /\.css$/,
-            loader: 'style-loader!css-loader!postcss-loader',
+            // use: ExtractTextPlugin.extract({
+                // fallback: 'style-loader',
+                use: [
+                    'style-loader',
+                    { loader: 'css-loader', options: { importLoaders: 1 } },
+                    'postcss-loader',
+                ],
+            // }),
         }],
     },
-
-    postcss: (webpack) => (
-        [
-            autoprefixer({
-                browsers: ['last 2 versions'],
-            }),
-            postcssImport({
-                addDependencyTo: webpack,
-            }),
-        ]
-    ),
 };
 
 if (process.env.NODE_ENV === 'production') {

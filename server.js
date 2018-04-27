@@ -3,6 +3,8 @@
 import APIServer from './server/APIServer.js';
 import * as utils from './utils/misc.js';
 
+require('babel-polyfill');
+
 const Express = require('express');
 const Http = require('http');
 const Path = require('path');

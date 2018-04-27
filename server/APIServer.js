@@ -1,4 +1,4 @@
-
+"use strict";
 
 import StoreManager from './StoreManager';
 import { funcCheck, safeJSONParse, devLog } from '../utils/misc';
@@ -61,7 +61,7 @@ export default class APIServer {
             } };
     }
 
-    matchAPIPattern(path:string, query:Object) {
+    matchAPIPattern(path, query) {
         if (path && path.startsWith('/api/')) {
             return true;
         }
@@ -242,7 +242,7 @@ export default class APIServer {
 
             if (shouldLoadFeed) {
                 // generate
-                this.generateFeed(id,url,lastDate,(res, error) => {
+                this.generateFeed(id, url, lastDate, (res, error) => {
                     if (res) {
                         callback({ xml: res });
                     } else {
