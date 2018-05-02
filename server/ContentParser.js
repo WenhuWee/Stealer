@@ -3,7 +3,7 @@ import * as utils from '../utils/misc.js';
 import { ParseTask, URLTask } from '../Model/CrawlTask.js';
 import { FeedObject, FeedItemObject } from '../Model/FeedObject.js';
 import URLManager from './URLManager.js';
-import KerasCaptcha from './captcha/kerasCaptcha';
+import KerasCaptcha from '../captcha/kerasCaptcha';
 
 const Async = require('async');
 const Cheerio = require('cheerio');
