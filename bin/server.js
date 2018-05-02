@@ -10,5 +10,8 @@ try {
     console.error(err);
 }
 
+require('keras-js');
+
 require('babel-core/register')(config);
+// require('babel-polyfill').default;
 require('../server');
