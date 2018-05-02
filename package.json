@@ -99,12 +99,14 @@
     "webpack-merge": "^4.1.2"
   },
   "dependencies": {
+    "babel-cli": "^6.26.0",
     "babel-preset-stage-0": "^6.24.1",
     "body-parser": "^1.15.2",
     "cssnano": "^3.10.0",
     "feed": "^0.3.0",
     "immutable": "^3.8.1",
     "jimp": "^0.2.28",
+    "keras-js": "^1.0.3",
     "level": "^3.0.0",
     "ndarray": "^1.0.18",
     "ndarray-ops": "^1.2.2",

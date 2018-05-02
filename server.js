@@ -3,7 +3,7 @@
 import APIServer from './server/APIServer.js';
 import * as utils from './utils/misc.js';
 
-require('babel-polyfill');
+import KerasCaptcha from './captcha/kerasCaptcha';
 
 const Express = require('express');
 const Http = require('http');
@@ -11,6 +11,14 @@ const Path = require('path');
 const bodyParser = require('body-parser');
 
 // ------------- web server ----------------
+
+const captcha = new KerasCaptcha();
+// console.time();
+captcha.predict('./captcha/sample/cefb.jpg', (chars, err) =>{
+    // console.timeEnd();
+    console.log(chars, err);
+});
+
 
 const apiServer = new APIServer();
 const app = new Express();

@@ -1,3 +1,4 @@
+
 const fs = require('fs');
 
 const babelrc = fs.readFileSync('./.babelrc');
@@ -10,5 +11,8 @@ try {
     console.error(err);
 }
 
+require('keras-js');
+
 require('babel-core/register')(config);
+// require('babel-polyfill');
 require('../server');

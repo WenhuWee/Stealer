@@ -4,18 +4,23 @@ const Jimp = require('jimp');
 const ndarray = require('ndarray');
 const ops = require('ndarray-ops');
 
-export class kerasCaptcha {
+export default class KerasCaptcha {
 
     constructor() {
         this.model = new KerasJS.Model({
-            filepath: './captcha/my_model.bin',
+            filepath: './captcha/model/my_model.bin',
             filesystem: true,
         });
     }
 
     predict(url, callback) {
-        Jimp.read('./captcha/sample/prwh.jpg', (err, image) => {
-            if (err) throw err;
+        const self = this;
+
+        Jimp.read(url, (err, image) => {
+            if (err) {
+                callback(null, err);
+                return;
+            }
         
             const resizeImg = image.resize(120, 50);
         
@@ -28,11 +33,11 @@ export class kerasCaptcha {
             ops.assign(uniArrImg.pick(null, null, 1), imageArr.pick(null, null, 1));
             ops.assign(uniArrImg.pick(null, null, 2), imageArr.pick(null, null, 2));
         
-            model.ready().then(() => {
+            self.model.ready().then(() => {
                 const inputData = {
                     input_1: uniArrImg.data,
                 };
-                return model.predict(inputData);
+                return self.model.predict(inputData);
             }).then((outputData) => {
                 const dense1 = outputData.dense_1;
                 const dense2 = outputData.dense_2;
@@ -57,9 +62,9 @@ export class kerasCaptcha {
                 const chars = labels.map((x) => {
                     return String.fromCharCode(97 + x);
                 });
-                console.log(chars);
+                callback(chars, null);
             }).catch((modelErr) => {
-                console.log(modelErr);
+                callback(null, modelErr);
             });
         });
     }

@@ -5,21 +5,30 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Babel",
             "type": "node",
             "request": "launch",
-            "name": "Launch via NPM",
-            "runtimeExecutable": "npm",
+            "program": "${workspaceRoot}/bin/server.js",
+            "stopOnEntry": false,
+            "args": [],
+            "cwd": "${workspaceRoot}",
+            "preLaunchTask": null,
+            "runtimeExecutable": "${workspaceRoot}/node_modules/.bin/babel-node",
             "runtimeArgs": [
-                "run",
-                "start-dev"
+                "--nolazy"
             ],
-            "port": 9229
+            "env": {
+                "NODE_ENV": "development"
+            },
+            "console": "internalConsole",
+            "sourceMaps": false,
+            "outFiles": []
         },
         {
             "type": "node",
             "request": "launch",
             "name": "启动程序",
-            "program": "${workspaceFolder}/kerasCaptcha.js",
+            "program": "${workspaceFolder}/bin/server.js",
             "sourceMaps": true
         }
     ]
