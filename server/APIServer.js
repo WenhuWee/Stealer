@@ -9,6 +9,7 @@ import { FeedStoreModel } from '../model/FeedStoreModel';
 const Url = require('url');
 const Zlib = require('zlib');
 const QS = require('querystring');
+const FS = require('fs');
 
 export default class APIServer {
     constructor() {
@@ -412,11 +413,10 @@ export default class APIServer {
 // verify
     verifyCode(params, callback) {
         const back = funcCheck(callback);
-        // const url = "https://mp.weixin.qq.com/profile?src=3&timestamp=1516848221&ver=1&signature=1ZhvUCDmPOE0g3QsCLiz-oPoT6Wmi3nDDMdcD4bbB87SUp08IDquZe1ntCrlpgizzQ4EPWcfFB8TUyE0WiNF4w==";
-        const url = "https://mp.weixin.qq.com/profile?src=3&timestamp=1516948927&ver=1&signature=3qVUyqanU8EROR9rxb9XRTfjKICywIBqZl0kmRX80scaLfuKejlo0JwEA5mIhbTqqp8h*EuOwTEOF-8BVnX2Yg==";
-
-        const res = {};
-        res.html = `<html><body><iframe frameborder="0" width="100%" height="100%" src=${url}></iframe></body></html>`;
-        back(res,null);
+        FS.readdir('./captchaSample/', (err, files) => {
+            const res = {};
+            res.files = files;
+            back(res, null);
+        });
     }
 }

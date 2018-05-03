@@ -72,7 +72,9 @@ export default class KerasCaptcha {
                     cookie = imgResponse.headers['set-cookie'].join(';');
                 }
 
+                // console.time('predict');
                 self.predict(codeURL, imgBody, (chars, image, predictErr) => {
+                    // console.timeEnd('predict');
                     if (!chars) {
                         predictBlock(index + 1);
                     } else {
