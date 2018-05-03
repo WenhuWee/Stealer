@@ -23,9 +23,9 @@ export default class KerasCaptcha {
         model.ready().then(() => {
             self.model = model;
 
-            self.autoPredict(20, (success, err) => {
-                console.log(success, err);
-            });
+            // self.autoPredict(20, (success, err) => {
+            //     console.log(success, err);
+            // });
         }).catch((err) => {});
     }
 
