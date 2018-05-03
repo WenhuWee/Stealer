@@ -1,12 +1,11 @@
 
-import * as utils from '../utils/misc.js';
+import { devLog } from '../utils/misc';
+
 const KerasJS = require('keras-js');
 const Jimp = require('jimp');
 const ndarray = require('ndarray');
 const ops = require('ndarray-ops');
-const Axios = require('axios');
-const Querystring = require('querystring');
-const Http = require("https");
+const Request = require('request');
 
 export default class KerasCaptcha {
 
@@ -21,9 +20,9 @@ export default class KerasCaptcha {
         model.ready().then(() => {
             self.model = model;
 
-            self.autoPredict(20, (success, err) => {
-                console.log(success, err);
-            });
+            // self.autoPredict(20, (success, err) => {
+            //     console.log(success, err);
+            // });
         }).catch((err) => {});
     }
 
@@ -43,50 +42,83 @@ export default class KerasCaptcha {
             const cert = new Date().getTime() + Math.random();
             const codeURL = `https://mp.weixin.qq.com/mp/verifycode?cert=${cert}`;
 
-            console.log(index);
-            console.log(codeURL);
-            self.predict(codeURL, (chars, image, predictErr) => {
-                if (chars) {
-                    const params = {
-                        'cert': cert,
-                        input: chars,
-                    };
-                    let name = chars;
-                    if (!name) {
-                        name = Math.random();
-                    }
-                    const paramsString = Querystring.stringify(params);
-                    console.log(paramsString);
+            devLog(index);
+            devLog(codeURL);
 
-                    Axios.post('https://mp.weixin.qq.com/mp/verifycode', paramsString).then((response) => {
-                        console.log(response.data);
-                        if (response.data && response.data.ret !== 501) {
-                            if (response.data.ret === 0) {
-                                image.write(`./captchaSample/${name}.jpg`);
-                                callbackSet(true, null);
-                            } else {
-                                image.write(`./captchaSample/${cert}.jpg`);
-                                callbackSet(false, null);
-                            }
-                        } else {
-                            if (index < count) {
-                                predictBlock(index + 1);
-                            } else {
-                                callbackSet(false, null);
-                            }
-                            image.write(`./captchaSample/${cert}.jpg`);
-                        }
-                    }).catch((error) => {
-                        // console.log(error);
-                    });
-                    console.log(index, chars);
+            const options = {
+                method: 'GET',
+                url: 'https://mp.weixin.qq.com/mp/verifycode',
+                qs: { cert: cert },
+                encoding: null,
+            };
+            Request(options, (imgeError, imgResponse, imgBody) => {
+                if (imgeError || !imgBody) {
+                    predictBlock(index + 1);
+                    return;
                 }
+
+                let cookie = '';
+                if (imgResponse.headers['set-cookie']) {
+                    cookie = imgResponse.headers['set-cookie'].join(';');
+                }
+
+                self.predict(codeURL, imgBody, (chars, image, predictErr) => {
+                    if (!chars) {
+                        predictBlock(index + 1);
+                    } else {
+                        const params = {
+                            cert: cert,
+                            input: chars,
+                        };
+                        let name = chars;
+                        if (!name) {
+                            name = Math.random();
+                        }
+                        devLog(params);
+
+                        const postOptions = {
+                            method: 'POST',
+                            url: 'https://mp.weixin.qq.com/mp/verifycode',
+                            headers: {
+                                Accept: 'application/json',
+                                'Content-Type': 'application/x-www-form-urlencoded',
+                                Cookie: cookie,
+                            },
+                            form: { input: chars, cert: chars },
+                        };
+
+                        Request(postOptions, (error, response, body) => {
+                            devLog(body);
+                            let bodyObj = null;
+                            try {
+                                bodyObj = JSON.parse(body);
+                            } catch (parseErr) { }
+
+                            if (bodyObj && bodyObj.ret !== 501) {
+                                if (bodyObj.ret === 0) {
+                                    image.write(`./captchaSample/${name}.jpg`);
+                                    callbackSet(true, null);
+                                } else {
+                                    image.write(`./captchaSample/${cert}.jpg`);
+                                    callbackSet(false, null);
+                                }
+                            } else {
+                                if (index < count) {
+                                    predictBlock(index + 1);
+                                } else {
+                                    callbackSet(false, null);
+                                }
+                                image.write(`./captchaSample/${cert}.jpg`);
+                            }
+                        });
+                    }
+                });
             });
         };
         predictBlock(0);
     }
 
-    predict(url, callback) {
+    predict(url, img, callback) {
         if (!this.model) {
             callback(null, null, 'waiting initialization');
             return;
@@ -94,7 +126,12 @@ export default class KerasCaptcha {
 
         const self = this;
 
-        Jimp.read(url, (err, image) => {
+        let readParams = url;
+        if (img) {
+            readParams = img;
+        }
+
+        Jimp.read(readParams, (err, image) => {
             if (err) {
                 callback(null, err);
                 return;
@@ -112,7 +149,7 @@ export default class KerasCaptcha {
             ops.assign(uniArrImg.pick(null, null, 2), imageArr.pick(null, null, 2));
 
             const inputData = {
-                input_1: uniArrImg.data
+                input_1: uniArrImg.data,
             };
             self.model.predict(inputData).then((outputData) => {
                 const dense1 = outputData.dense_1;
@@ -129,15 +166,12 @@ export default class KerasCaptcha {
                         if (n > p) {
                             maxI = i;
                             return n;
-                        } else {
-                            return p;
                         }
+                        return p;
                     });
                     labels.push(maxI);
                 });
-                const chars = labels.map((x) => {
-                    return String.fromCharCode(97 + x);
-                });
+                const chars = labels.map(x => String.fromCharCode(97 + x));
                 callback(chars.join(''), image, null);
             }).catch((modelErr) => {
                 callback(null, image, modelErr);

@@ -109,6 +109,7 @@
     "ndarray": "^1.0.18",
     "ndarray-ops": "^1.2.2",
     "nedb": "^1.8.0",
+    "request": "^2.85.0",
     "validator": "^6.2.0"
   }
 }

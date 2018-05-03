@@ -1,8 +1,8 @@
 
-import * as utils from '../utils/misc.js';
-import { ParseTask, URLTask } from '../Model/CrawlTask.js';
-import { FeedObject, FeedItemObject } from '../Model/FeedObject.js';
-import URLManager from './URLManager.js';
+import * as utils from '../utils/misc';
+import { ParseTask, URLTask } from '../Model/CrawlTask';
+import { FeedObject, FeedItemObject } from '../Model/FeedObject';
+import URLManager from './URLManager';
 import KerasCaptcha from '../captcha/kerasCaptcha';
 
 const Async = require('async');
@@ -20,7 +20,7 @@ export default class ContentParser {
                 '/weixin': this.parseSougouWeixin,
             },
             'mp.weixin.qq.com': {
-                '/profile': this.parseWeixinProfile,
+                '/profile': this.parseWeixinProfile.bind(this),
                 '/s': this.parseWeixinArticle,
             },
             'chuansong.me': {
@@ -224,11 +224,11 @@ export default class ContentParser {
         // parseTask.feed.link = task.url;
         let urlTasks = [];
 
-        if (verifyCodeBox) {
-            // self.autoPredict(8, (success, err) => {
-            //     // console.log(success, err);
-            // });
-            console.log('in');
+        if (verifyCodeBox.length) {
+            this.captcha.autoPredict(8, (success, err) => {
+                console.log(success, err);
+            });
+            callback(urlTasks, parseTask, null);
             return;
         }
 
@@ -251,7 +251,7 @@ export default class ContentParser {
 
                         if (Array.isArray(msgList)) {
                             msgList.every((ele,index) => {
-                                if (index > 10){
+                                if (index > 10) {
                                     return false;
                                 }
 
