@@ -209,6 +209,9 @@ export default class ContentParser {
         const $ = Cheerio.load(task.content, {
             normalizeWhitespace: true,
         });
+
+        const verifyCodeBox = $('#verify_result');
+
         const script = $('script').filter(function (i, el) {
             const text = $(this).text();
             return text.indexOf('var biz') !== -1;
@@ -220,6 +223,14 @@ export default class ContentParser {
         parseTask.feed = new FeedObject();
         // parseTask.feed.link = task.url;
         let urlTasks = [];
+
+        if (verifyCodeBox) {
+            // self.autoPredict(8, (success, err) => {
+            //     // console.log(success, err);
+            // });
+            console.log('in');
+            return;
+        }
 
         if (script) {
             const text = script.text();

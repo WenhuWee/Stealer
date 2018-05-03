@@ -20,7 +20,7 @@ export default class URLManager {
                 '/': '',
             },
             'weixin.sogou.com':{
-                '/': {'Cookie':'ABTEST=0|1501334532|v1; IPLOC=SG; SUID=08E1A6BC2930990A00000000597C8C04; PHPSESSID=8ktoa1f828jam7a58ntc18hg16; SUIR=1501334532; SUID=08E1A6BC2208990A00000000597C8C06; SUV=1501334540673968; SNUID=27D196932F35655B80CA7C70304366F0; JSESSIONID=aaaFONgTVzsfd8gKXz41v; sct=5; ld=DZllllllll2BKwCjlllllVOD0Uwllllls3bPjlllll9lllll4ylll5@@@@@@@@@@; weixinIndexVisited=1'}
+                '/': {'Cookie':'ABTEST=0|1525288678|v1; SUID=F417E3A52A30990A000000005AEA0EE6; SUID=1F59DFDD3921940A000000005AEA0EE6; IPLOC=US; weixinIndexVisited=1; SUV=000251E7A5E317F45AEA0F0BAEE95543; SNUID=52B14403A6A2CC9A53A5EF48A73927EB; JSESSIONID=aaa5vRQvzkTuW7IAxGlmw'}
             }
         };
 
@@ -155,7 +155,7 @@ export default class URLManager {
             headers: {
                 ...headers,
                 host: url.host,
-                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:57.0) Gecko/20100101 Firefox/57.0',
+                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:59.0) Gecko/20100101 Firefox/59.0',
             },
         };
 

@@ -1,14 +1,18 @@
 
+import * as utils from '../utils/misc.js';
 const KerasJS = require('keras-js');
 const Jimp = require('jimp');
 const ndarray = require('ndarray');
 const ops = require('ndarray-ops');
+const Axios = require('axios');
+const Querystring = require('querystring');
+const Http = require("https");
 
 export default class KerasCaptcha {
 
     constructor() {
         const self = this;
-
+        self.predicting = false;
         const model = new KerasJS.Model({
             filepath: './captcha/model/my_model.bin',
             filesystem: true,
@@ -16,18 +20,75 @@ export default class KerasCaptcha {
 
         model.ready().then(() => {
             self.model = model;
-            // console.time('keras');
-            // self.predict('./captcha/sample/cefb.jpg', (chars, err) => {
-            //     // console.timeEnd('keras');
-            //     // console.log(chars, err);
-            // });
-        }).catch((err) => {
-        });
+
+            self.autoPredict(20, (success, err) => {
+                console.log(success, err);
+            });
+        }).catch((err) => {});
+    }
+
+    autoPredict(count, callback) {
+        const self = this;
+        if (self.predicting) {
+            callback(false, null);
+            return;
+        }
+        self.predicting = true;
+        const callbackSet = (success, err) => {
+            self.predicting = false;
+            callback(success, err);
+        };
+
+        const predictBlock = (index) => {
+            const cert = new Date().getTime() + Math.random();
+            const codeURL = `https://mp.weixin.qq.com/mp/verifycode?cert=${cert}`;
+
+            console.log(index);
+            console.log(codeURL);
+            self.predict(codeURL, (chars, image, predictErr) => {
+                if (chars) {
+                    const params = {
+                        'cert': cert,
+                        input: chars,
+                    };
+                    let name = chars;
+                    if (!name) {
+                        name = Math.random();
+                    }
+                    const paramsString = Querystring.stringify(params);
+                    console.log(paramsString);
+
+                    Axios.post('https://mp.weixin.qq.com/mp/verifycode', paramsString).then((response) => {
+                        console.log(response.data);
+                        if (response.data && response.data.ret !== 501) {
+                            if (response.data.ret === 0) {
+                                image.write(`./captchaSample/${name}.jpg`);
+                                callbackSet(true, null);
+                            } else {
+                                image.write(`./captchaSample/${cert}.jpg`);
+                                callbackSet(false, null);
+                            }
+                        } else {
+                            if (index < count) {
+                                predictBlock(index + 1);
+                            } else {
+                                callbackSet(false, null);
+                            }
+                            image.write(`./captchaSample/${cert}.jpg`);
+                        }
+                    }).catch((error) => {
+                        // console.log(error);
+                    });
+                    console.log(index, chars);
+                }
+            });
+        };
+        predictBlock(0);
     }
 
     predict(url, callback) {
         if (!this.model) {
-            callback(null, 'waiting initialization');     
+            callback(null, null, 'waiting initialization');
             return;
         }
 
@@ -50,7 +111,9 @@ export default class KerasCaptcha {
             ops.assign(uniArrImg.pick(null, null, 1), imageArr.pick(null, null, 1));
             ops.assign(uniArrImg.pick(null, null, 2), imageArr.pick(null, null, 2));
 
-            const inputData = { input_1: uniArrImg.data };
+            const inputData = {
+                input_1: uniArrImg.data
+            };
             self.model.predict(inputData).then((outputData) => {
                 const dense1 = outputData.dense_1;
                 const dense2 = outputData.dense_2;
@@ -75,11 +138,10 @@ export default class KerasCaptcha {
                 const chars = labels.map((x) => {
                     return String.fromCharCode(97 + x);
                 });
-                callback(chars, null);
+                callback(chars.join(''), image, null);
             }).catch((modelErr) => {
-                callback(null, modelErr);
+                callback(null, image, modelErr);
             });
         });
     }
 }
-
