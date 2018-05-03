@@ -6,12 +6,15 @@ const Jimp = require('jimp');
 const ndarray = require('ndarray');
 const ops = require('ndarray-ops');
 const Request = require('request');
+const FS = require('fs');
+
 
 export default class KerasCaptcha {
 
     constructor() {
         const self = this;
         self.predicting = false;
+        self.shouldWriteCaptcha = true;
         const model = new KerasJS.Model({
             filepath: './captcha/model/my_model.bin',
             filesystem: true,
@@ -20,9 +23,9 @@ export default class KerasCaptcha {
         model.ready().then(() => {
             self.model = model;
 
-            // self.autoPredict(20, (success, err) => {
-            //     console.log(success, err);
-            // });
+            self.autoPredict(20, (success, err) => {
+                console.log(success, err);
+            });
         }).catch((err) => {});
     }
 
@@ -32,6 +35,13 @@ export default class KerasCaptcha {
             callback(false, null);
             return;
         }
+
+        FS.readdir('./captchaSample/', (err, files) => {
+            if (files.length > 10000) {
+                self.shouldWriteCaptcha = false;
+            }
+        });
+
         self.predicting = true;
         const callbackSet = (success, err) => {
             self.predicting = false;
@@ -96,10 +106,14 @@ export default class KerasCaptcha {
 
                             if (bodyObj && bodyObj.ret !== 501) {
                                 if (bodyObj.ret === 0) {
-                                    image.write(`./captchaSample/${name}.jpg`);
+                                    if (self.shouldWriteCaptcha) {
+                                        image.write(`./captchaSample/${name}.jpg`);
+                                    }
                                     callbackSet(true, null);
                                 } else {
-                                    image.write(`./captchaSample/${cert}.jpg`);
+                                    if (self.shouldWriteCaptcha) {
+                                        image.write(`./captchaSample/${cert}.jpg`);
+                                    }
                                     callbackSet(false, null);
                                 }
                             } else {
@@ -108,7 +122,9 @@ export default class KerasCaptcha {
                                 } else {
                                     callbackSet(false, null);
                                 }
-                                image.write(`./captchaSample/${cert}.jpg`);
+                                if (self.shouldWriteCaptcha) {
+                                    image.write(`./captchaSample/${cert}.jpg`);
+                                }
                             }
                         });
                     }
