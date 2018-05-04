@@ -222,41 +222,6 @@ function handleSogouWeixinUrl(url) {
     return tasks;
 }
 
-// chuansong
-function handleChuansongSearchUrl(url) {
-    const tasks = [];
-    if (url) {
-        const contentTask = new URLTask();
-        contentTask.url = url;
-        contentTask.type = 'chuansongSearch';
-        tasks.push(contentTask);
-    }
-    return tasks;
-}
-
-function handleChuansongProfileUrl(url) {
-    const tasks = [];
-    if (url) {
-        const contentTask = new URLTask();
-        contentTask.url = url;
-        contentTask.type = 'chuansongProfile';
-        tasks.push(contentTask);
-    }
-    return tasks;
-}
-
-function handleChuansongArticalUrl(url) {
-    const tasks = [];
-    if (url) {
-        const contentTask = new URLTask();
-        contentTask.url = url;
-        contentTask.type = 'chuansongArticle';
-        tasks.push(contentTask);
-    }
-    return tasks;
-}
-
-
 URLManager.urlHandler = {
     'zhuanlan.zhihu.com': {
         '/': handleZhihuZhuanlanUrl,
@@ -269,15 +234,6 @@ URLManager.urlHandler = {
         '/': handleWinxinProfileUrl,
         '/profile': handleWinxinProfileUrl,
         '/s': handleWeixinArticleUrl,
-    },
-    'chuansong.me': {
-        '/search': handleChuansongSearchUrl,
-        '/account': {
-            '/': handleChuansongProfileUrl,
-        },
-        '/n': {
-            '/': handleChuansongArticalUrl,
-        },
     },
 };
 

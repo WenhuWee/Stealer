@@ -3,7 +3,7 @@
 import StoreManager from './StoreManager';
 import { funcCheck, safeJSONParse, devLog } from '../utils/misc';
 import Spider from './Spider';
-import { FeedObject } from '../Model/FeedObject.js';
+import { FeedObject } from '../Model/FeedObject';
 import { FeedStoreModel } from '../model/FeedStoreModel';
 
 const Url = require('url');
@@ -17,7 +17,6 @@ export default class APIServer {
             feed: {
                 zhihu: this.getZhihuFeed,
                 weixin: this.getWeixinFeed,
-                chuansong: this.getChuansongFeed,
             },
             info: {
                 status: this.getCurrentStatus,
@@ -62,7 +61,7 @@ export default class APIServer {
             } };
     }
 
-    matchAPIPattern(path:string, query:Object) {
+    matchAPIPattern(path, query) {
         if (path && path.startsWith('/api/')) {
             return true;
         }
@@ -177,6 +176,7 @@ export default class APIServer {
             const timer = {};
             const crawlTimer = this.spider.crawlTimers[key];
             timer.url = crawlTimer.url;
+            timer.id = crawlTimer.id;
 
             if (process.env.NODE_ENV === 'production') {
                 const time = crawlTimer.interval / (1000 * 60);
@@ -188,6 +188,17 @@ export default class APIServer {
             timer.next = crawlTimer.nextTiming.toLocaleString('en-US', { timeZone: 'Asia/Shanghai' });
             timers.push(timer);
         });
+        timers.sort((a, b) => {
+            const aTimer = this.spider.crawlTimers[a.url];
+            const bTimer = this.spider.crawlTimers[b.url];
+            if (aTimer.nextTiming > bTimer.nextTiming) {
+                return 1;
+            } else if (aTimer.nextTiming < bTimer.nextTiming) {
+                return -1;
+            }
+            return 0;
+        });
+
         res.timers = timers;
         StoreManager.instance().getAllDocs((docs) => {
             if (Array.isArray(docs)) {
@@ -215,7 +226,7 @@ export default class APIServer {
         });
     }
 
-    getFeed(id,url,isForced, callback) {
+    getFeed(id, url, isForced, callback) {
         if (typeof callback !== 'function') {
             return;
         }
@@ -223,35 +234,34 @@ export default class APIServer {
             callback(this.lackErrorResponse);
         }
 
-        const currentDate = new Date();
+        let currentDate = new Date();
 
-        StoreManager.instance().updateLastVisitedDate (id,url,currentDate);
+        StoreManager.instance().updateLastVisitedDate(id, url, currentDate);
 
-        StoreManager.instance().getRSSSource(id,url, (feedObj) => {
+        StoreManager.instance().getRSSSource(id, url, (feedObj) => {
 
             let shouldLoadFeed = isForced;
             if (!shouldLoadFeed) {
-                const currentDate = new Date();
+                currentDate = new Date();
                 let generateInterval = 60 * 60 * 1000;
                 if (process.env.NODE_ENV !== 'production') {
                     generateInterval = 10 * 1000;
                 }
-                shouldLoadFeed = !feedObj || (!feedObj.xml && feedObj.errTime && currentDate - feedObj.errTime > generateInterval)
+                shouldLoadFeed = !feedObj || (!feedObj.xml && feedObj.errTime && currentDate - feedObj.errTime > generateInterval);
             }
 
             const lastDate = feedObj ? feedObj.lastItemDate : null;
 
             if (shouldLoadFeed) {
                 // generate
-                this.generateFeed(id,url,lastDate,(res, error) => {
+                this.generateFeed(id, url, lastDate, (res, error) => {
                     if (res) {
                         callback({ xml: res });
                     } else {
                         callback(error);
                     }
                 });
-            }
-            else if(feedObj && feedObj.xml) {
+            } else if (feedObj && feedObj.xml) {
                 // from db
                 devLog('From DB');
                 callback({ xml: feedObj.xml });
@@ -262,26 +272,14 @@ export default class APIServer {
         });
     }
 
-    getChuansongFeed(params, callback) {
-        const back = funcCheck(callback);
-        const name = params.name;
-        const isForced = params.forced;
-        if (name) {
-            const url = `http://chuansong.me/search?q=${name}`;
-            this.getFeed(name,url,isForced,back);
-        } else {
-            back(this.commonErrorWithMsg('bad url'));
-        }
-    }
-
     getZhihuFeed(params, callback) {
         const back = funcCheck(callback);
         const name = params.name;
         const isForced = params.forced;
         if (name) {
-            const id = 'zhihu_' + name;
+            const id = `zhihu_${name}`;
             const url = `https://zhuanlan.zhihu.com/${name}`;
-            this.getFeed(id,url,isForced,back);
+            this.getFeed(id, url, isForced, back);
         } else {
             back(this.commonErrorWithMsg('bad name'));
         }
@@ -293,18 +291,18 @@ export default class APIServer {
         const isForced = params.forced;
         if (name) {
             const url = `http://weixin.sogou.com/weixin?type=1&query=${name}`;
-            this.getFeed(name,url,isForced,back);
+            this.getFeed(name, url, isForced, back);
         } else {
             back(this.commonErrorWithMsg('bad url'));
         }
     }
 
-    generateFeed(id,url,lastItemDate,callback) {
+    generateFeed(id, url, lastItemDate, callback) {
         const back = funcCheck(callback);
         if (url && id) {
             const feedObj = new FeedObject();
             feedObj.lastItemDate = lastItemDate;
-            this.spider.crawlUrl(url,feedObj, (feed, err) => {
+            this.spider.crawlUrl(url, feedObj, (feed, err) => {
                 let data = null;
                 let error = null;
                 if (err) {
@@ -326,7 +324,7 @@ export default class APIServer {
                     feedSource.xml = data;
                     feedSource.updatedTime = new Date();
                     StoreManager.instance().setRSSSource(feedSource);
-                    this.spider.startTimerWithUrl(id,url,feedSource.interval,feedSource.updatedTime);
+                    this.spider.startTimerWithUrl(id, url, feedSource.interval, feedSource.updatedTime);
                     callback(data, null);
                 } else if (error) {
                     feedSource.errTime = new Date();
@@ -354,12 +352,12 @@ export default class APIServer {
             url = decodeURIComponent(url);
         }
         if ((url || id) && interval) {
-            StoreManager.instance().updateTimerInterval(id,url,interval, (err,feed) => {
+            StoreManager.instance().updateTimerInterval(id, url, interval, (err, feed) => {
                 if (!err) {
                     if (feed && feed.url) {
-                        this.spider.startTimerWithUrl(feed.id,feed.url,interval,null);
+                        this.spider.startTimerWithUrl(feed.id, feed.url, interval, null);
                     }else if (url) {
-                        this.spider.startTimerWithUrl(id,url,interval,null);
+                        this.spider.startTimerWithUrl(id, url, interval, null);
                     }
                     callback(this.commonSuccessResponse);
                 } else {
@@ -376,8 +374,8 @@ export default class APIServer {
         let path = params.path;
         let cookies = params.cookies;
         if (host && path && cookies) {
-            this.spider.updateCookies(host,path,cookies);
-            StoreManager.instance().setCookies(host,path,cookies);
+            this.spider.updateCookies(host, path, cookies);
+            StoreManager.instance().setCookies(host, path, cookies);
             callback(this.commonSuccessResponse);
         }else{
             callback(this.commonErrorResponse);
@@ -393,7 +391,7 @@ export default class APIServer {
             url = decodeURIComponent(url);
         }
         if (url || id) {
-            StoreManager.instance().delRSSSource(id,url, (err,feed) => {
+            StoreManager.instance().delRSSSource(id, url, (err, feed) => {
                 if (!err) {
                     if (url) {
                         this.spider.stopTimerWithUrl(url);

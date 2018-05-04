@@ -58,5 +58,5 @@ const PORT = process.env.PORT || 3333;
 const server = Http.createServer(app);
 server.listen(PORT, () => {
     const address = server.address();
-    utils.devLog(`Web server listening on: ${address}`);
+    utils.devLog(`Web server listening on: ${address.address}:${address.port}`);
 });
