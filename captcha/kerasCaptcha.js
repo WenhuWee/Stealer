@@ -99,6 +99,12 @@ export default class KerasCaptcha {
                             form: { input: chars, cert: chars },
                         };
 
+                        const date = new Date();
+                        const month = date.getMonth() + 1;
+                        const monthStr = month < 10 ? `0${month}` : month;
+                        const dateStr = date.getDate() < 10 ? `0${date.getDate()}` : date.getDate();
+                        const dateString = `${monthStr}${dateStr}`;
+
                         Request(postOptions, (error, response, body) => {
                             devLog(body);
                             let bodyObj = null;
@@ -109,12 +115,12 @@ export default class KerasCaptcha {
                             if (bodyObj && bodyObj.ret !== 501) {
                                 if (bodyObj.ret === 0) {
                                     if (self.shouldWriteCaptcha) {
-                                        image.write(`./captchaSample/${name}.jpg`);
+                                        image.write(`./captchaSample/${dateString}_${name}.jpg`);
                                     }
                                     callbackSet(true, null);
                                 } else {
                                     if (self.shouldWriteCaptcha) {
-                                        image.write(`./captchaSample/${cert}.jpg`);
+                                        image.write(`./captchaSample/${dateString}_${cert}.jpg`);
                                     }
                                     callbackSet(false, null);
                                 }
@@ -125,7 +131,7 @@ export default class KerasCaptcha {
                                     callbackSet(false, null);
                                 }
                                 if (self.shouldWriteCaptcha) {
-                                    image.write(`./captchaSample/${cert}.jpg`);
+                                    image.write(`./captchaSample/${dateString}_${cert}.jpg`);
                                 }
                             }
                         });
