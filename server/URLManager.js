@@ -1,11 +1,10 @@
 
-import { URLTask, ParseTask } from '../Model/CrawlTask.js';
-import StoreManager from './StoreManager.js';
+import { URLTask, ParseTask } from '../Model/CrawlTask';
+import StoreManager from './StoreManager';
 
-const Http = require('http');
-const Https = require('https');
 const Url = require('url');
 const Async = require('async');
+const Request = require('request');
 
 export default class URLManager {
     constructor() {
@@ -25,11 +24,11 @@ export default class URLManager {
         };
 
         const manager = this;
-        StoreManager.instance().getCookies(null,null,(cookies)=>{
-            if (cookies){
-                cookies.forEach((cookie) =>{
-                    manager.updateCookies(cookie.host,cookie.path,cookie.cookies);
-                })
+        StoreManager.instance().getCookies(null, null, (cookies) => {
+            if (cookies) {
+                cookies.forEach((cookie) => {
+                    manager.updateCookies(cookie.host, cookie.path, cookie.cookies);
+                });
             }
         });
     }
@@ -91,11 +90,11 @@ export default class URLManager {
         }
     }
 
-    updateCookies(host,path,cookies){
-        this._setDefaultHeader(host,path,{'Cookie':cookies});
+    updateCookies(host, path, cookies) {
+        this._setDefaultHeader(host, path, {'Cookie':cookies});
     }
 
-    requestURL(url,callback){
+    requestURL(url, callback) {
         const contentTask = new URLTask();
         contentTask.url = url;
         this._requestURL(contentTask, (newTask) => {
@@ -142,52 +141,27 @@ export default class URLManager {
         }
         // console.log(headers);
 
-        let requestObject = Http.request;
-        let port = url.port || 80;
-        if (url.protocol === 'https:') {
-            requestObject = Https.request;
-            port = url.port || 443;
-        }
+        const parseTask = new ParseTask();
+        parseTask.url = task.url;
+        parseTask.type = task.type;
+
         const options = {
-            hostname: url.host,
-            port,
-            path: url.path,
+            method: 'GET',
+            url: task.url,
             headers: {
                 ...headers,
                 host: url.host,
                 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:59.0) Gecko/20100101 Firefox/59.0',
             },
         };
-
-
-        const parseTask = new ParseTask();
-        parseTask.url = task.url;
-        parseTask.type = task.type;
-
-        const manager = this;
-
-        const request = requestObject(options, (res) => {
-            const body = [];
-            // const setcookie = res.headers["set-cookie"];
-            // if (setcookie) {
-            //     const cookieString = setcookie.join(';');
-            //     manager._setDefaultHeader(url.host,url.pathname,{'Cookie':cookieString});
-            //     StoreManager.instance().setCookies(url.host,url.pathname, cookieString);
-            // }
-            res.on('data', (data) => {
-                body.push(data);
-            });
-            res.on('end', () => {
-                const buffer = Buffer.concat(body);
-                parseTask.content = buffer.toString('utf-8');
+        Request(options, (error, response, body) => {
+            if (error) {
+                parseTask.error = error;
                 callback(parseTask);
-            });
-        });
-        request.end();
-
-        request.on('error', (error) => {
-            parseTask.error = error;
-            callback(parseTask);
+            } else {
+                parseTask.content = body;
+                callback(parseTask);
+            }
         });
     }
 }

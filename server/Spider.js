@@ -48,6 +48,7 @@ export default class Spider {
                 throw Error('Can not Find "./log" Dir');
             }
         }
+        // this.fakeCrawler();
     }
 
     getTimeOutTime(base) {
@@ -243,14 +244,14 @@ export default class Spider {
     }
 
     fakeCrawler() {
-        this.URLManager.insertURL('https://zhuanlan.zhihu.com/spatialeconomics', null, this.contentHanlder.bind(this));
-    }
-
-    contentHanlder(tasks, error) {
-        if (error) {
-            // utils.devLog(error);
-        } else {
-            this.contentParser.parse(tasks, () => {});
-        }
+        const feedObject = new FeedObject();
+        feedObject.lastItemDate = null;
+        // const url = 'https://mp.weixin.qq.com/s?timestamp=1525447847&src=3&ver=1&signature=kMXr8*-y2MNXcuH*90FfeLdxEJOZZCoS6ZidNe0Z2yyGADbxyozdekGrcCLFpN-oQ1bZ2iOf3gZ9jnHvNIXtryAku1IorTpgJ*zk2hvz14XQbf094Uwmgixzf9yvAngAZ6bqtOUd3B08TKnexUiR8itIrEvCxCFTGuG8nvOBba0=';
+        const url = 'https://mp.weixin.qq.com/profile?src=3&timestamp=1525446001&ver=1&signature=hQDpZ3Kj-jSImow1GKOSD9k5HYbv0VER36-NMwH5s07irTZWxIcRhPTgKLk8skE3Kg-s0SJU5tI9OFpFAEglEg==';
+        this.crawlUrl(url, feedObject, (feed, err) => {
+            if (feed) {
+                
+            }
+        });
     }
 }

@@ -190,7 +190,10 @@ export default class ContentParser {
         const $ = Cheerio.load(task.content, {
             normalizeWhitespace: true,
         });
-        const content = $('#img-content .rich_media_content');
+        const content = $('#img-content');
+        // console.log(task.url);
+        // console.log(task.content);
+        
         content.find('img').each((index, img) => {
             const src = $(img).attr('data-src');
             $(img).attr('src', src);
