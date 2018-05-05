@@ -185,7 +185,10 @@ export default class ContentParser {
         const $ = Cheerio.load(task.content, {
             normalizeWhitespace: true,
         });
-        const content = $('#img-content');
+        let content = $('#js_content');
+        if (!content.length) {
+            content = $('#js_content', '.rich_media_content');
+        }
         // console.log(task.url);
         // console.log(task.content);
         
