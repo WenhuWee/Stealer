@@ -101,12 +101,14 @@ export default class KerasCaptcha {
 
                         const date = new Date();
                         const month = date.getMonth() + 1;
-                        const hour = date.getHours() + 1;
+                        const hour = date.getHours();
                         const minute = date.getMinutes();
-                    
+
+                        const hourStr = hour < 10 ? `0${hour}` : hour;
+                        const minuteStr = minute < 10 ? `0${minute}` : minute;
                         const monthStr = month < 10 ? `0${month}` : month;
                         const dateStr = date.getDate() < 10 ? `0${date.getDate()}` : date.getDate();
-                        const dateString = `${monthStr}${dateStr}${hour}${minute}`;
+                        const dateString = `${monthStr}${dateStr}${hourStr}${minuteStr}`;
 
                         Request(postOptions, (error, response, body) => {
                             devLog(body);
