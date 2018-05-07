@@ -101,7 +101,7 @@ export default class KerasCaptcha {
 
                         const date = new Date();
                         const month = date.getMonth() + 1;
-                        const hour = date.getHours();
+                        const hour = date.getUTCHours() + 8;
                         const minute = date.getMinutes();
 
                         const hourStr = hour < 10 ? `0${hour}` : hour;
