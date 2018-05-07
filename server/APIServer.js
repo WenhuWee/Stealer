@@ -411,9 +411,16 @@ export default class APIServer {
 // verify
     verifyCode(params, callback) {
         const back = funcCheck(callback);
+
+        let last = params.num;
+        if (!last) {
+            last = 30;
+        }
+
         FS.readdir('./captchaSample/', (err, files) => {
             const res = {};
-            res.files = files;
+            res.count = files.length;
+            res.last = files.length > last ? files.slice(-last) : files;
             back(res, null);
         });
     }
