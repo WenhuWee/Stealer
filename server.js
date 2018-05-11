@@ -34,12 +34,12 @@ if (process.env.NODE_ENV !== 'production') {
             path: '/__webpack_hmr',
             heartbeat: 10 * 1000,
         }));
-
     }
 }());
 
 app.use(bodyParser.raw({ type: '*/*', inflate: false }));
 app.use('/image', Express.static(Path.join(__dirname, '/resource/image/')));
+app.use('/captchaSample', Express.static(Path.join(__dirname, '/captchaSample/')));
 
 app.all(/^\/api\/(.*)/, (req, res) => {
     if (apiServer.matchAPIPattern(req.url)) {
