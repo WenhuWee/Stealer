@@ -434,7 +434,12 @@ export default class APIServer {
         FS.readdir('./captchaSample/', (err, files) => {
             const res = {};
             res.count = files.length;
-            res.last = files.length > last ? files.slice(-last) : files;
+            const countFiles = files.length > last ? files.slice(-last) : files;
+            res.last = countFiles.map((file)=> {
+                const fileObj = {};
+                fileObj[file] = `http://rss.wenmino.com:8080/captchaSample/${file}`;
+                return fileObj;
+            });
             back(res, null);
         });
     }

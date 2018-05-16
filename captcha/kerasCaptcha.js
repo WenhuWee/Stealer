@@ -130,7 +130,7 @@ export default class KerasCaptcha {
                                     callbackSet(true, null);
                                 } else {
                                     if (self.shouldWriteCaptcha) {
-                                        image.write(`./captchaSample/${dateString}_${cert}.jpg`);
+                                        image.write(`./captchaSample/${dateString}_${cert}_${chars}.jpg`);
                                     }
                                     callbackSet(false, null);
                                 }
@@ -141,7 +141,7 @@ export default class KerasCaptcha {
                                     callbackSet(false, null);
                                 }
                                 if (self.shouldWriteCaptcha) {
-                                    image.write(`./captchaSample/${dateString}_${cert}.jpg`);
+                                    image.write(`./captchaSample/${dateString}_${cert}_${chars}.jpg`);
                                 }
                             }
                         });
