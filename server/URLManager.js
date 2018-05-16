@@ -192,6 +192,9 @@ function handleWeixinArticleUrl(url) {
     const tasks = [];
     if (url) {
         const contentTask = new URLTask();
+        // if (url.charAt(4) === ':') {
+        //     url.replace(/^http/, 'https');
+        // }
         contentTask.url = url;
         contentTask.type = 'weixinArticle';
         tasks.push(contentTask);
@@ -222,6 +225,17 @@ function handleSogouWeixinUrl(url) {
     return tasks;
 }
 
+function handleJikeUrl(url) {
+    const tasks = [];
+    if (url) {
+        const contentTask = new URLTask();
+        contentTask.url = url;
+        contentTask.type = 'jieke';
+        tasks.push(contentTask);
+    }
+    return tasks;
+}
+
 URLManager.urlHandler = {
     'zhuanlan.zhihu.com': {
         '/': handleZhihuZhuanlanUrl,
@@ -234,6 +248,9 @@ URLManager.urlHandler = {
         '/': handleWinxinProfileUrl,
         '/profile': handleWinxinProfileUrl,
         '/s': handleWeixinArticleUrl,
+    },
+    'app.jike.ruguoapp.com': {
+        '/1.0/messages/showDetail': handleJikeUrl,
     },
 };
 

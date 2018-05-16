@@ -17,6 +17,7 @@ export default class APIServer {
             feed: {
                 zhihu: this.getZhihuFeed,
                 weixin: this.getWeixinFeed,
+                jike: this.getJikeFeed,
             },
             info: {
                 status: this.getCurrentStatus,
@@ -279,6 +280,19 @@ export default class APIServer {
         if (name) {
             const id = `zhihu_${name}`;
             const url = `https://zhuanlan.zhihu.com/${name}`;
+            this.getFeed(id, url, isForced, back);
+        } else {
+            back(this.commonErrorWithMsg('bad name'));
+        }
+    }
+
+    getJikeFeed(params, callback) {
+        const back = funcCheck(callback);
+        const name = params.name;
+        const isForced = params.forced;
+        if (name) {
+            const id = `jieke_${name}`;
+            const url = `https://app.jike.ruguoapp.com/1.0/messages/showDetail?topicId=${name}`;
             this.getFeed(id, url, isForced, back);
         } else {
             back(this.commonErrorWithMsg('bad name'));

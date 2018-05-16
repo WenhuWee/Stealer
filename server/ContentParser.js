@@ -23,6 +23,9 @@ export default class ContentParser {
                 '/profile': this.parseWeixinProfile.bind(this),
                 '/s': this.parseWeixinArticle,
             },
+            'app.jike.ruguoapp.com': {
+                '/1.0/messages/showDetail': this.parseJKProfile,
+            },
         };
         this.captcha = new KerasCaptcha();
     }
@@ -83,6 +86,72 @@ export default class ContentParser {
         } else {
             callback([], null);
         }
+    }
+
+    parseJKProfile(task, callback) {
+
+        const res = utils.safeJSONParse(task.content);
+
+        const parseTask = task.copy();
+        parseTask.feed = new FeedObject();
+        parseTask.feed.title = `即刻 - ${res.topic.content}`;
+        parseTask.feed.description = res.topic.briefIntro;
+        parseTask.feed.id = res.topic.id;
+        parseTask.feed.link = task.url;
+
+        let feedUpdatedTime = new Date();
+
+        let urlTasks = [];
+
+        res.messages.forEach((item, index) => {
+            let contentTemplate = item.content;
+            if (item.linkUrl) {
+                contentTemplate = `<a href="${item.linkUrl}">${item.content}</a>`;
+            }
+            if (item.personalUpdate && item.personalUpdate.linkUrl) {
+                contentTemplate = `<a href="${item.personalUpdate.linkUrl}">${item.content}</a>`;
+            }
+
+            let imgTemplate = '';
+            item.pictureUrls && item.pictureUrls.forEach((pic) => {
+                imgTemplate += `<br><img referrerpolicy="no-referrer" src="${pic.picUrl}">`;
+            });
+            item.personalUpdate && item.personalUpdate.pictureUrls && item.personalUpdate.pictureUrls.forEach((pic) => {
+                imgTemplate += `<br><img referrerpolicy="no-referrer" src="${pic.picUrl}">`;
+            });
+
+            let videoTemplate = '';
+            if (item.video) {
+                videoTemplate = `<br>视频: <img referrerpolicy="no-referrer" src="${item.video.image.picUrl}">`;
+            }
+            if (item.personalUpdate && item.personalUpdate.video) {
+                videoTemplate = `<br>视频: <img referrerpolicy="no-referrer" src="${item.personalUpdate.video.image.picUrl}">`;
+            }
+            if (index === 0) {
+                feedUpdatedTime = new Date(item.createdAt);
+            }
+            const feedItem = new FeedItemObject();
+            feedItem.title = item.content;
+            feedItem.id = item.id;
+            feedItem.link = item.originalLinkUrl;
+            feedItem.date = new Date(item.createdAt);
+            feedItem.content = `${contentTemplate}${imgTemplate}${videoTemplate}`;
+            feedItem.authorName = item.author;
+
+            const tasks = URLManager.urlTasksFromURL(feedItem.link);
+            urlTasks = urlTasks.concat(tasks);
+
+            if (tasks.length) {
+                feedItem.mergeID = tasks[0].url;
+            } else {
+                feedItem.mergeID = feedItem.link;
+            }
+
+            parseTask.feed.addItem(feedItem);
+        });
+        parseTask.feed.updated = feedUpdatedTime;
+
+        callback(urlTasks, parseTask, null);
     }
 
     parseZhihuZhuanlan(task, callback) {
