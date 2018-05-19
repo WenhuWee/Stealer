@@ -171,7 +171,7 @@ export default class ContentParser {
                             const urlObject = Url.parse(src);
                             if (!urlObject.host) {
                                 src = `http://pic3.zhimg.com/${src}`;
-                                if (!src.endsWith('png') && !src.endsWith('jpg')) {
+                                if (!src.endsWith('png') && !src.endsWith('jpg') && !src.endsWith('gif')) {
                                     src = `${src}_b.jpg`;
                                 }
                                 $(img).attr('src', src);
