@@ -27,12 +27,12 @@ export default class Spider {
             if (Array.isArray(feeds) && feeds.length) {
                 feeds.forEach((ele, index) => {
                     const timer = setTimeout((feed) => {
-                        this.startTimerWithUrl(feed.id,feed.url,feed.interval,feed.updatedTime);
+                        this.startTimerWithUrl(feed.id, feed.url, feed.interval, feed.updatedTime);
                         if (this.timeOutTimes[feed.url]) {
                             delete this.timeOutTimes[feed.url];
                         }
                     }, this.getTimeOutTime(Math.random() * 10), ele);
-                    this.timeOutTimes[ele] = timer;
+                    this.timeOutTimes[ele.url] = timer;
                 });
             }
         });
