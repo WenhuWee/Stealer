@@ -59,29 +59,30 @@ export default class Spider {
         }
     }
 
-    stopTimerWithUrl(url) {
-        if (url) {
-            const timer = this.crawlTimers[url];
+    stopTimerWithUrl(id, url) {
+        const key = id || url;
+        if (key) {
+            const timer = this.crawlTimers[key];
             if (timer) {
                 timer.stop();
-                delete this.crawlTimers[url];
+                delete this.crawlTimers[key];
             }
-            if (this.timeOutTimes[url]) {
-                clearTimeout(this.timeOutTimes[url]);
-                delete this.timeOutTimes[url];
+            if (this.timeOutTimes[key]) {
+                clearTimeout(this.timeOutTimes[key]);
+                delete this.timeOutTimes[key];
             }
         }
     }
 
     startTimerWithUrl(id, url, interval, baseDate) {
-        if (url && this.crawlTimers[url]) {
-            const crawlTimer = this.crawlTimers[url];
+        if (id && this.crawlTimers[id]) {
+            const crawlTimer = this.crawlTimers[id];
             crawlTimer.update(interval);
         }
 
-        if (url && !this.crawlTimers[url]) {
+        if (id && url && !this.crawlTimers[id]) {
             const timer = new TimingCrawlTask(id, url, interval, baseDate);
-            this.crawlTimers[url] = timer;
+            this.crawlTimers[id] = timer;
             timer.start((timerID, crawlUrl) => {
                 StoreManager.instance().getRSSSource(timerID, crawlUrl, (feedObj) => {
                     const currentDateTime = Date.now();
@@ -89,8 +90,8 @@ export default class Spider {
                     // const gap = 30 * 1000;
                     if (feedObj && feedObj.lastVisitedDate && currentDateTime - feedObj.lastVisitedDate.getTime() > gap) {
                         StoreManager.instance().delRSSSource(feedObj.id, null, (err, feed) => {
-                            if (!err && feed.url) {
-                                this.stopTimerWithUrl(feed.url);
+                            if (!err && feed.url && feed.id) {
+                                this.stopTimerWithUrl(feed.id, feed.url);
                             }
                         });
                     } else {
