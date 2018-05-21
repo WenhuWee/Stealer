@@ -291,7 +291,7 @@ export default class APIServer {
         const name = params.name;
         const isForced = params.forced;
         if (name) {
-            const id = `jieke_${name}`;
+            const id = `jike_${name}`;
             const url = `https://app.jike.ruguoapp.com/1.0/messages/showDetail?topicId=${name}`;
             this.getFeed(id, url, isForced, back);
         } else {

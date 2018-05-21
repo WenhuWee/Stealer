@@ -230,7 +230,7 @@ function handleJikeUrl(url) {
     if (url) {
         const contentTask = new URLTask();
         contentTask.url = url;
-        contentTask.type = 'jieke';
+        contentTask.type = 'jike';
         tasks.push(contentTask);
     }
     return tasks;

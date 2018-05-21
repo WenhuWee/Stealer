@@ -73,23 +73,22 @@ export default class Spider {
         }
     }
 
-    startTimerWithUrl(id,url,interval,baseDate) {
-        if (url && this.crawlTimers[url])
-        {
+    startTimerWithUrl(id, url, interval, baseDate) {
+        if (url && this.crawlTimers[url]) {
             const crawlTimer = this.crawlTimers[url];
             crawlTimer.update(interval);
         }
 
         if (url && !this.crawlTimers[url]) {
-            const timer = new TimingCrawlTask(id,url, interval, baseDate);
+            const timer = new TimingCrawlTask(id, url, interval, baseDate);
             this.crawlTimers[url] = timer;
-            timer.start((id,crawlUrl) => {
-                StoreManager.instance().getRSSSource(id,crawlUrl, (feedObj) => {
+            timer.start((timerID, crawlUrl) => {
+                StoreManager.instance().getRSSSource(timerID, crawlUrl, (feedObj) => {
                     const currentDateTime = Date.now();
                     const gap = 1 * 24 * 60 * 60 * 1000;
                     // const gap = 30 * 1000;
                     if (feedObj && feedObj.lastVisitedDate && currentDateTime - feedObj.lastVisitedDate.getTime() > gap) {
-                        StoreManager.instance().delRSSSource(feedObj.id,null, (err,feed) => {
+                        StoreManager.instance().delRSSSource(feedObj.id, null, (err, feed) => {
                             if (!err && feed.url) {
                                 this.stopTimerWithUrl(feed.url);
                             }
@@ -99,13 +98,13 @@ export default class Spider {
                         devLog(crawlUrl);
                         const feedObject = new FeedObject();
                         feedObject.lastItemDate = feedObj.lastItemDate;
-                        this.crawlUrl(crawlUrl,feedObject,(feed, error) => {
+                        this.crawlUrl(crawlUrl, feedObject, (feed, error) => {
                             devLog(error);
                             if (feed) {
                                 const xml = feed.generateRSSXML();
                                 if (xml) {
                                     const feedModel = new FeedStoreModel();
-                                    feedModel.id = feed.id;
+                                    feedModel.id = timerID;
                                     feedModel.url = crawlUrl;
                                     feedModel.title = feed.title;
                                     feedModel.xml = xml;
@@ -113,9 +112,9 @@ export default class Spider {
                                     feedModel.lastItemDate = feed.lastItemDate;
                                     StoreManager.instance().setRSSSource(feedModel);
                                 } else {
-                                    StoreManager.instance().getRSSSource(id,crawlUrl, (feedObj) => {
-                                        if (feedObj) {
-                                            const feedSource = feedObj.copy();
+                                    StoreManager.instance().getRSSSource(timerID, crawlUrl, (errFeedObj) => {
+                                        if (errFeedObj) {
+                                            const feedSource = errFeedObj.copy();
                                             feedSource.errTime = new Date();
                                             feedSource.errMsg = 'timer crawl generateRSSXML error';
                                             StoreManager.instance().setRSSSource(feedSource);
@@ -123,9 +122,9 @@ export default class Spider {
                                     });
                                 }
                             } else {
-                                StoreManager.instance().getRSSSource(id,crawlUrl, (feedObj) => {
-                                    if (feedObj) {
-                                        const feedSource = feedObj.copy();
+                                StoreManager.instance().getRSSSource(timerID, crawlUrl, (errFeedObj) => {
+                                    if (errFeedObj) {
+                                        const feedSource = errFeedObj.copy();
                                         feedSource.errTime = new Date();
                                         if (error) {
                                             feedSource.errMsg = error;
