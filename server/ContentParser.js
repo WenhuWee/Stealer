@@ -127,7 +127,7 @@ export default class ContentParser {
             imgTemplate += '</p>';
 
             let audioTemplate = '<p>';
-            if (item.personalUpdate.linkInfo && item.personalUpdate.linkInfo.audio) {
+            if (item.personalUpdate && item.personalUpdate.linkInfo && item.personalUpdate.linkInfo.audio) {
                 audioTemplate += `<h2>${item.personalUpdate.linkInfo.title}</h2>`;
                 try {
                     const audioLinkObject = Url.parse(item.personalUpdate.linkInfo.linkUrl);
