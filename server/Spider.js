@@ -1,10 +1,10 @@
 
-import URLManager from './URLManager.js';
-import ContentParser from './ContentParser.js';
-import StoreManager from './StoreManager.js';
-import { TimingCrawlTask } from '../Model/CrawlTask.js';
-import { FeedObject } from '../Model/FeedObject.js';
-import { devLog } from '../utils/misc.js';
+import URLManager from './URLManager';
+import ContentParser from './ContentParser';
+import StoreManager from './StoreManager';
+import { TimingCrawlTask } from '../Model/CrawlTask';
+import { FeedObject } from '../Model/FeedObject';
+import { devLog } from '../utils/misc';
 import { FeedStoreModel } from '../model/FeedStoreModel';
 
 const FS = require('fs');
@@ -199,8 +199,8 @@ export default class Spider {
         });
     }
 
-    updateCookies(host,path,cookies){
-        this.URLManager.updateCookies(host,path,cookies);
+    updateCookies(host, path, cookies) {
+        this.URLManager.updateCookies(host, path, cookies);
     }
 
     logWithTasks(tasks) {

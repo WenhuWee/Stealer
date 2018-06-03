@@ -184,7 +184,7 @@ export default class ContentParser {
                 feedUpdatedTime = new Date(item.createdAt);
             }
             const feedItem = new FeedItemObject();
-            feedItem.title = item.content.substring(0, 15);
+            feedItem.title = item.content.substring(0, 25);
             if (feedItem.title.length === 0) {
                 feedItem.title = ' ';
             }
