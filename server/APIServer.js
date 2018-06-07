@@ -251,11 +251,9 @@ export default class APIServer {
                 shouldLoadFeed = !feedObj || (!feedObj.xml && feedObj.errTime && currentDate - feedObj.errTime > generateInterval);
             }
 
-            const lastDate = feedObj ? feedObj.lastItemDate : null;
-
             if (shouldLoadFeed) {
                 // generate
-                this.generateFeed(id, url, lastDate, (res, error) => {
+                this.generateFeed(id, url, feedObj, (res, error) => {
                     if (res) {
                         callback({ xml: res });
                     } else {
@@ -311,11 +309,11 @@ export default class APIServer {
         }
     }
 
-    generateFeed(id, url, lastItemDate, callback) {
+    generateFeed(id, url, storeFeed, callback) {
         const back = funcCheck(callback);
         if (url && id) {
             const feedObj = new FeedObject();
-            feedObj.lastItemDate = lastItemDate;
+            feedObj.lastItemDate = storeFeed ? storeFeed.lastItemDate : null;
             this.spider.crawlUrl(url, feedObj, (feed, err) => {
                 let data = null;
                 let error = null;
@@ -337,6 +335,9 @@ export default class APIServer {
                     feedSource.lastItemDate = feed.lastItemDate;
                     feedSource.xml = data;
                     feedSource.updatedTime = new Date();
+                    if (storeFeed) {
+                        feedSource.interval = feedObj.interval;
+                    }
                     StoreManager.instance().setRSSSource(feedSource);
                     this.spider.startTimerWithUrl(id, url, feedSource.interval, feedSource.updatedTime);
                     callback(data, null);
@@ -361,7 +362,7 @@ export default class APIServer {
         const back = funcCheck(callback);
         let url = params.url;
         let id = params.id;
-        let interval = params.interval;
+        let interval = params.inteintervalrval;
         if (url) {
             url = decodeURIComponent(url);
         }

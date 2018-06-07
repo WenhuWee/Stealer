@@ -125,12 +125,12 @@ export default class StoreManager {
         }
         source.interval = interval;
 
-        this.setRSSSource(source,(err,source) =>{
-            callback(err,source);
-        })
+        this.setRSSSource(source, (err, newSource) => {
+            callback(err, newSource);
+        });
     }
 
-    setRSSSource(source:FeedStoreModel,callback) {
+    setRSSSource(source:FeedStoreModel, callback) {
         if (source instanceof FeedStoreModel && source.isValid()) {
             const leveldb = this.leveldb;
 
@@ -152,20 +152,20 @@ export default class StoreManager {
         }
     }
 
-    getRSSSource(id,url, callback) {
+    getRSSSource(id, url, callback) {
         if (callback && (id || url)) {
-            let searchObj = {};
+            const searchObj = {};
             if (id) {
-              searchObj['_id'] = id;
-            }else if (url) {
-              searchObj['url'] = url;
+                searchObj['_id'] = id;
+            } else if (url) {
+                searchObj['url'] = url;
             }
             let identifier = id;
             if (!identifier) {
                 identifier = url;
             }
 
-            this.leveldb.get(identifier, function (err, value) {
+            this.leveldb.get(identifier, (err, value) => {
                 if (value) {
                     const valueObj = safeJSONParse(value);
                     const oldSource = new FeedStoreModel(valueObj);
@@ -177,7 +177,7 @@ export default class StoreManager {
         }
     }
 
-    getCookies(host,pathName,callback){
+    getCookies(host, pathName, callback) {
         if (callback) {
             const searchObj = {};
             if (host && pathName) {
@@ -194,10 +194,10 @@ export default class StoreManager {
         }
     }
 
-    setCookies(host,pathName,cookies) {
+    setCookies(host, pathName, cookies) {
         if (host && pathName && cookies) {
             const id = `${host}${pathName}`;
-            const insertRes = {'_id':id,'host':host,'path':pathName,'cookies':cookies};
+            const insertRes = {'_id': id, 'host': host, 'path': pathName, 'cookies': cookies};
             this.cookiesdb.insert(insertRes, (insertErr, insertNewDocs) => {
                 if (insertNewDocs) {
 
