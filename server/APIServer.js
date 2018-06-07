@@ -22,17 +22,18 @@ export default class APIServer {
             info: {
                 status: this.getCurrentStatus,
             },
-            update:{
+            update: {
                 interval: this.updateInterval,
                 cookies: this.updateCookies,
             },
             del: {
                 zhihu: this.delFeed,
                 weixin: this.delFeed,
+                jike: this.delFeed,
             },
-            verify:{
+            verify: {
                 code: this.verifyCode,
-            }
+            },
         };
 
         this.commonErrorResponse = {
@@ -190,8 +191,8 @@ export default class APIServer {
             timers.push(timer);
         });
         timers.sort((a, b) => {
-            const aTimer = this.spider.crawlTimers[a.url];
-            const bTimer = this.spider.crawlTimers[b.url];
+            const aTimer = this.spider.crawlTimers[a.id];
+            const bTimer = this.spider.crawlTimers[b.id];
             if (aTimer.nextTiming > bTimer.nextTiming) {
                 return 1;
             } else if (aTimer.nextTiming < bTimer.nextTiming) {
@@ -289,7 +290,7 @@ export default class APIServer {
         const name = params.name;
         const isForced = params.forced;
         if (name) {
-            const id = `jieke_${name}`;
+            const id = `jike_${name}`;
             const url = `https://app.jike.ruguoapp.com/1.0/messages/showDetail?topicId=${name}`;
             this.getFeed(id, url, isForced, back);
         } else {
@@ -371,7 +372,7 @@ export default class APIServer {
                 if (!err) {
                     if (feed && feed.url) {
                         this.spider.startTimerWithUrl(feed.id, feed.url, interval, null);
-                    }else if (url) {
+                    } else if (url) {
                         this.spider.startTimerWithUrl(id, url, interval, null);
                     }
                     callback(this.commonSuccessResponse);
@@ -392,7 +393,7 @@ export default class APIServer {
             this.spider.updateCookies(host, path, cookies);
             StoreManager.instance().setCookies(host, path, cookies);
             callback(this.commonSuccessResponse);
-        }else{
+        } else {
             callback(this.commonErrorResponse);
         }
     }
@@ -408,11 +409,7 @@ export default class APIServer {
         if (url || id) {
             StoreManager.instance().delRSSSource(id, url, (err, feed) => {
                 if (!err) {
-                    if (url) {
-                        this.spider.stopTimerWithUrl(url);
-                    } else if(feed){
-                        this.spider.stopTimerWithUrl(feed.url);
-                    }
+                    this.spider.stopTimerWithUrl(id, url);
                     callback(this.commonSuccessResponse);
                 } else {
                     callback(this.commonErrorResponse);

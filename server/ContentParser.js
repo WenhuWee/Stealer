@@ -102,40 +102,96 @@ export default class ContentParser {
         let feedUpdatedTime = new Date();
 
         let urlTasks = [];
+        let oriLink = null;
 
         res.messages.forEach((item, index) => {
+
             let contentTemplate = item.content;
+            if (contentTemplate) {
+                contentTemplate = `<p>${contentTemplate}</p>`;
+            }
             if (item.linkUrl) {
-                contentTemplate = `<a href="${item.linkUrl}">${item.content}</a>`;
+                contentTemplate += `<a href="${item.linkUrl}">内容链接</a>`;
             }
             if (item.personalUpdate && item.personalUpdate.linkUrl) {
-                contentTemplate = `<a href="${item.personalUpdate.linkUrl}">${item.content}</a>`;
+                contentTemplate += `<a href="${item.personalUpdate.linkUrl}">内容链接</a>`;
             }
 
-            let imgTemplate = '';
+            let imgTemplate = '<p>';
             item.pictureUrls && item.pictureUrls.forEach((pic) => {
                 imgTemplate += `<br><img referrerpolicy="no-referrer" src="${pic.picUrl}">`;
             });
             item.personalUpdate && item.personalUpdate.pictureUrls && item.personalUpdate.pictureUrls.forEach((pic) => {
                 imgTemplate += `<br><img referrerpolicy="no-referrer" src="${pic.picUrl}">`;
             });
+            imgTemplate += '</p>';
+
+            let audioTemplate = '<p>';
+            if (item.personalUpdate && item.personalUpdate.linkInfo && item.personalUpdate.linkInfo.audio) {
+                audioTemplate += `<h2>${item.personalUpdate.linkInfo.title}</h2>`;
+                try {
+                    const audioLinkObject = Url.parse(item.personalUpdate.linkInfo.linkUrl);
+                    if (audioLinkObject.host === 'music.163.com') {
+                        const audiourlPaths = audioLinkObject.pathname.split('/');
+                        const audiourlLastPath = audiourlPaths[audiourlPaths.length - 1];
+                        if (audiourlLastPath) {
+                            audioTemplate += `<iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width=330 height=86 src="//music.163.com/outchain/player?type=2&id=${audiourlLastPath}&auto=0&height=66"></iframe>`;
+                        }
+                    }
+                } catch (error) { }
+                oriLink = item.personalUpdate.linkInfo.linkUrl;
+                // audioTemplate += `<audio src="${item.personalUpdate.linkInfo.audio.id}" controls></audio>`;
+            }
+            audioTemplate += '</p>';
 
             let videoTemplate = '';
-            if (item.video) {
-                videoTemplate = `<br>视频: <img referrerpolicy="no-referrer" src="${item.video.image.picUrl}">`;
+            if (item.videoLink) {
+                try {
+                    const videoLinkObject = Url.parse(item.videoLink);
+                    const videoLinkParams = QS.parse(videoLinkObject.query);
+                    if (videoLinkParams.showurl) {
+                        const showurlObject = Url.parse(videoLinkParams.showurl);
+                        const showurlPaths = showurlObject.pathname.split('/');
+                        if (showurlObject.host === 'miaopai.com') {
+                            let showurlLastPath = showurlPaths[showurlPaths.length - 1];
+                            if (showurlLastPath) {
+                                const dotIndex = showurlLastPath.indexOf('.');
+                                if (dotIndex) {
+                                    showurlLastPath = showurlLastPath.substring(0, dotIndex);
+                                }
+                                videoTemplate += '<p>';
+                                videoTemplate += `<video controls src="https://gslb.miaopai.com/stream/${showurlLastPath}.mp4"></video>`;
+                                videoTemplate += '/p';
+                            }
+                        }
+                    }
+                } catch (error) {}
             }
-            if (item.personalUpdate && item.personalUpdate.video) {
-                videoTemplate = `<br>视频: <img referrerpolicy="no-referrer" src="${item.personalUpdate.video.image.picUrl}">`;
+
+            if (!videoTemplate.length) {
+                videoTemplate += '<p>';
+                if (item.video) {
+                    videoTemplate += `<br>视频: <img referrerpolicy="no-referrer" src="${item.video.image.picUrl}">`;
+                }
+
+                if (item.personalUpdate && item.personalUpdate.video) {
+                    videoTemplate += `<br>视频: <img referrerpolicy="no-referrer" src="${item.personalUpdate.video.image.picUrl}">`;
+                }
+                videoTemplate += '</p>';
             }
+
             if (index === 0) {
                 feedUpdatedTime = new Date(item.createdAt);
             }
             const feedItem = new FeedItemObject();
-            feedItem.title = item.content;
+            feedItem.title = item.content.substring(0, 25);
+            if (feedItem.title.length === 0) {
+                feedItem.title = ' ';
+            }
             feedItem.id = item.id;
-            feedItem.link = item.originalLinkUrl;
+            feedItem.link = oriLink || item.originalLinkUrl;
             feedItem.date = new Date(item.createdAt);
-            feedItem.content = `${contentTemplate}${imgTemplate}${videoTemplate}`;
+            feedItem.content = `${contentTemplate}${audioTemplate}${imgTemplate}${videoTemplate}`;
             feedItem.authorName = item.author;
 
             const tasks = URLManager.urlTasksFromURL(feedItem.link);
@@ -171,7 +227,7 @@ export default class ContentParser {
                             const urlObject = Url.parse(src);
                             if (!urlObject.host) {
                                 src = `http://pic3.zhimg.com/${src}`;
-                                if (!src.endsWith('png') && !src.endsWith('jpg')) {
+                                if (!src.endsWith('png') && !src.endsWith('jpg') && !src.endsWith('gif')) {
                                     src = `${src}_b.jpg`;
                                 }
                                 $(img).attr('src', src);

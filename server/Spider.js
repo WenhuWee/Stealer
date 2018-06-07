@@ -1,10 +1,10 @@
 
-import URLManager from './URLManager.js';
-import ContentParser from './ContentParser.js';
-import StoreManager from './StoreManager.js';
-import { TimingCrawlTask } from '../Model/CrawlTask.js';
-import { FeedObject } from '../Model/FeedObject.js';
-import { devLog } from '../utils/misc.js';
+import URLManager from './URLManager';
+import ContentParser from './ContentParser';
+import StoreManager from './StoreManager';
+import { TimingCrawlTask } from '../Model/CrawlTask';
+import { FeedObject } from '../Model/FeedObject';
+import { devLog } from '../utils/misc';
 import { FeedStoreModel } from '../model/FeedStoreModel';
 
 const FS = require('fs');
@@ -27,12 +27,12 @@ export default class Spider {
             if (Array.isArray(feeds) && feeds.length) {
                 feeds.forEach((ele, index) => {
                     const timer = setTimeout((feed) => {
-                        this.startTimerWithUrl(feed.id,feed.url,feed.interval,feed.updatedTime);
+                        this.startTimerWithUrl(feed.id, feed.url, feed.interval, feed.updatedTime);
                         if (this.timeOutTimes[feed.url]) {
                             delete this.timeOutTimes[feed.url];
                         }
                     }, this.getTimeOutTime(Math.random() * 10), ele);
-                    this.timeOutTimes[ele] = timer;
+                    this.timeOutTimes[ele.url] = timer;
                 });
             }
         });
@@ -59,38 +59,39 @@ export default class Spider {
         }
     }
 
-    stopTimerWithUrl(url) {
-        if (url) {
-            const timer = this.crawlTimers[url];
+    stopTimerWithUrl(id, url) {
+        const key = id || url;
+        if (key) {
+            const timer = this.crawlTimers[key];
             if (timer) {
                 timer.stop();
-                delete this.crawlTimers[url];
+                delete this.crawlTimers[key];
             }
-            if (this.timeOutTimes[url]) {
-                clearTimeout(this.timeOutTimes[url]);
-                delete this.timeOutTimes[url];
+            if (this.timeOutTimes[key]) {
+                clearTimeout(this.timeOutTimes[key]);
+                delete this.timeOutTimes[key];
             }
         }
     }
 
     startTimerWithUrl(id, url, interval, baseDate) {
-        if (url && this.crawlTimers[url]) {
-            const crawlTimer = this.crawlTimers[url];
+        if (id && this.crawlTimers[id]) {
+            const crawlTimer = this.crawlTimers[id];
             crawlTimer.update(interval);
         }
 
-        if (url && !this.crawlTimers[url]) {
+        if (id && url && !this.crawlTimers[id]) {
             const timer = new TimingCrawlTask(id, url, interval, baseDate);
-            this.crawlTimers[url] = timer;
-            timer.start((id, crawlUrl) => {
-                StoreManager.instance().getRSSSource(id, crawlUrl, (feedObj) => {
+            this.crawlTimers[id] = timer;
+            timer.start((timerID, crawlUrl) => {
+                StoreManager.instance().getRSSSource(timerID, crawlUrl, (feedObj) => {
                     const currentDateTime = Date.now();
                     const gap = 1 * 24 * 60 * 60 * 1000;
                     // const gap = 30 * 1000;
                     if (feedObj && feedObj.lastVisitedDate && currentDateTime - feedObj.lastVisitedDate.getTime() > gap) {
                         StoreManager.instance().delRSSSource(feedObj.id, null, (err, feed) => {
-                            if (!err && feed.url) {
-                                this.stopTimerWithUrl(feed.url);
+                            if (!err && feed.url && feed.id) {
+                                this.stopTimerWithUrl(feed.id, feed.url);
                             }
                         });
                     } else {
@@ -104,7 +105,7 @@ export default class Spider {
                                 const xml = feed.generateRSSXML();
                                 if (xml) {
                                     const feedModel = new FeedStoreModel();
-                                    feedModel.id = feed.id;
+                                    feedModel.id = timerID;
                                     feedModel.url = crawlUrl;
                                     feedModel.title = feed.title;
                                     feedModel.xml = xml;
@@ -112,9 +113,9 @@ export default class Spider {
                                     feedModel.lastItemDate = feed.lastItemDate;
                                     StoreManager.instance().setRSSSource(feedModel);
                                 } else {
-                                    StoreManager.instance().getRSSSource(id, crawlUrl, (feedObj) => {
-                                        if (feedObj) {
-                                            const feedSource = feedObj.copy();
+                                    StoreManager.instance().getRSSSource(timerID, crawlUrl, (errFeedObj) => {
+                                        if (errFeedObj) {
+                                            const feedSource = errFeedObj.copy();
                                             feedSource.errTime = new Date();
                                             feedSource.errMsg = 'timer crawl generateRSSXML error';
                                             StoreManager.instance().setRSSSource(feedSource);
@@ -122,9 +123,9 @@ export default class Spider {
                                     });
                                 }
                             } else {
-                                StoreManager.instance().getRSSSource(id,crawlUrl, (feedObj) => {
-                                    if (feedObj) {
-                                        const feedSource = feedObj.copy();
+                                StoreManager.instance().getRSSSource(timerID, crawlUrl, (errFeedObj) => {
+                                    if (errFeedObj) {
+                                        const feedSource = errFeedObj.copy();
                                         feedSource.errTime = new Date();
                                         if (error) {
                                             feedSource.errMsg = error;
@@ -198,8 +199,8 @@ export default class Spider {
         });
     }
 
-    updateCookies(host,path,cookies){
-        this.URLManager.updateCookies(host,path,cookies);
+    updateCookies(host, path, cookies) {
+        this.URLManager.updateCookies(host, path, cookies);
     }
 
     logWithTasks(tasks) {
