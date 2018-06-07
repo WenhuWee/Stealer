@@ -363,7 +363,7 @@ export default class APIServer {
         const back = funcCheck(callback);
         let url = params.url;
         let id = params.id;
-        let interval = params.inteintervalrval;
+        let interval = params.interval;
         if (url) {
             url = decodeURIComponent(url);
         }
