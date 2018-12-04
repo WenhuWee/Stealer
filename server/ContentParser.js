@@ -110,11 +110,14 @@ export default class ContentParser {
             if (contentTemplate) {
                 contentTemplate = `<p>${contentTemplate}</p>`;
             }
-            if (item.linkUrl) {
-                contentTemplate += `<a href="${item.linkUrl}">内容链接</a>`;
-            }
-            if (item.personalUpdate && item.personalUpdate.linkUrl) {
-                contentTemplate += `<a href="${item.personalUpdate.linkUrl}">内容链接</a>`;
+            if (item.linkUrl && 
+                item.linkUrl.indexOf('jike://') == -1) {
+                oriLink = item.linkUrl;
+            } else if (item.personalUpdate && item.personalUpdate.linkUrl && 
+                item.personalUpdate.linkUrl.indexOf('jike://') == -1) {
+                oriLink = item.personalUpdate.linkUrl;
+            } else if (item.personalUpdate.linkInfo && item.personalUpdate.linkInfo.linkUrl && item.personalUpdate.linkInfo.linkUrl.indexOf('jike://') == -1) {
+                oriLink = item.personalUpdate.linkInfo.linkUrl;
             }
 
             let imgTemplate = '<p>';
@@ -179,6 +182,8 @@ export default class ContentParser {
                 }
                 videoTemplate += '</p>';
             }
+
+            contentTemplate += `<a href="${oriLink}">内容链接</a>`;
 
             if (index === 0) {
                 feedUpdatedTime = new Date(item.createdAt);
