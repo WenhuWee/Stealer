@@ -188,6 +188,20 @@ function handleZhihuZhuanlanUrl(url) {
     return tasks;
 }
 
+function handleZhihuZhuanlanArticleUrl(url) {
+    const tasks = [];
+    if (url) {
+        const contentTask = new URLTask();
+        // if (url.charAt(4) === ':') {
+        //     url.replace(/^http/, 'https');
+        // }
+        contentTask.url = url;
+        contentTask.type = 'zhihuArticle';
+        tasks.push(contentTask);
+    }
+    return tasks;
+}
+
 function handleWeixinArticleUrl(url) {
     const tasks = [];
     if (url) {
@@ -201,6 +215,8 @@ function handleWeixinArticleUrl(url) {
     }
     return tasks;
 }
+
+
 
 function handleWinxinProfileUrl(url) {
     const tasks = [];
@@ -239,6 +255,7 @@ function handleJikeUrl(url) {
 URLManager.urlHandler = {
     'zhuanlan.zhihu.com': {
         '/': handleZhihuZhuanlanUrl,
+        '/p': handleZhihuZhuanlanArticleUrl,
     },
     'weixin.sogou.com': {
         '/': handleSogouWeixinUrl,

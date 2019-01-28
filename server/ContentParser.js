@@ -14,7 +14,8 @@ export default class ContentParser {
     constructor() {
         this.parserDistributor = {
             'zhuanlan.zhihu.com': {
-                '/': this.parseZhihuZhuanlan,
+                '/api/columns': this.parseZhihuZhuanlan,
+                '/p': this.parseZhihuZhuanlanArticle,
             },
             'weixin.sogou.com': {
                 '/weixin': this.parseSougouWeixin,
@@ -36,18 +37,16 @@ export default class ContentParser {
         if (parserSet) {
             parser = parserSet[path];
             if (!parser) {
-                parser = parserSet['/'];
+                // parser = parserSet['/'];
                 const paths = path.split('/');
+                let currentPath = '';
                 paths.forEach((ele, index) => {
                     if (index > 0 && !parser) {
-                        const temp = parserSet[`/${ele}`];
+                        currentPath = currentPath.concat(`/${ele}`);
+                        const temp = parserSet[currentPath];
                         if (typeof temp === 'function') {
                             parser = temp;
                         }
-                        if (!parser) {
-                            parser = parserSet['/'];
-                        }
-                        parserSet = parserSet[`/${ele}`];
                     }
                 });
             }
@@ -215,49 +214,76 @@ export default class ContentParser {
         callback(urlTasks, parseTask, null);
     }
 
+    parseZhihuZhuanlanArticle(task, callback) {
+        const $ = Cheerio.load(task.content, {
+            normalizeWhitespace: true,
+        });
+        const content = $('.Post-Main');
+        // console.log(task.url);
+        // console.log(task.content);
+        
+        // content.find('img').each((index, img) => {
+        //     const src = $(img).attr('data-src');
+        //     $(img).attr('src', src);
+        // });
+
+        const parseTask = task.copy();
+        parseTask.feed = new FeedObject();
+        const item = new FeedItemObject();
+        item.content = content.html();
+        item.mergeID = task.url;
+        parseTask.feed.addItem(item);
+        callback([], parseTask, null);
+    }
+
     parseZhihuZhuanlan(task, callback) {
+        let urlTasks = [];
         const parseTask = new ParseTask();
         parseTask.url = task.url;
         parseTask.type = task.type;
         const res = utils.safeJSONParse(task.content);
         if (parseTask.type === 'content') {
-            if (Array.isArray(res)) {
-                res.forEach((ele) => {
-                    if (typeof (ele.content) === 'string') {
-                        const $ = Cheerio.load(ele.content, {
-                            normalizeWhitespace: true,
-                        });
-                        $('img').each((index, img) => {
-                            let src = $(img).attr('src');
-                            const urlObject = Url.parse(src);
-                            if (!urlObject.host) {
-                                src = `http://pic3.zhimg.com/${src}`;
-                                if (!src.endsWith('png') && !src.endsWith('jpg') && !src.endsWith('gif')) {
-                                    src = `${src}_b.jpg`;
-                                }
-                                $(img).attr('src', src);
-                            }
-                        });
-                        ele.content = $.html();
-                    }
-                });
+            const data = res.data;
+            if (Array.isArray(data)) {
+                // data.forEach((ele) => {
+                //     if (typeof (ele.excerpt) === 'string') {
+                //         const $ = Cheerio.load(ele.content, {
+                //             normalizeWhitespace: true,
+                //         });
+                //         $('img').each((index, img) => {
+                //             let src = $(img).attr('src');
+                //             const urlObject = Url.parse(src);
+                //             if (!urlObject.host) {
+                //                 src = `http://pic3.zhimg.com/${src}`;
+                //                 if (!src.endsWith('png') && !src.endsWith('jpg') && !src.endsWith('gif')) {
+                //                     src = `${src}_b.jpg`;
+                //                 }
+                //                 $(img).attr('src', src);
+                //             }
+                //         });
+                //         ele.content = $.html();
+                //     }
+                // });
 
                 parseTask.feed = new FeedObject();
 
                 let feedUpdatedTime = new Date();
-                res.forEach((ele, index) => {
+                data.forEach((ele, index) => {
                     if (index === 0) {
-                        feedUpdatedTime = new Date(ele.publishedTime);
+                        feedUpdatedTime = new Date(ele.updated);
                     }
                     const item = new FeedItemObject();
                     item.title = ele.title;
-                    item.id = utils.MD5(`https://zhuanlan.zhihu.com${ele.url}`);
-                    item.mergeID = `https://zhuanlan.zhihu.com${ele.url}`;
-                    item.link = `https://zhuanlan.zhihu.com${ele.url}`;
-                    item.date = new Date(ele.publishedTime);
-                    item.content = ele.content;
+                    item.id = utils.MD5(`${ele.url}`);
+                    item.mergeID = `${ele.url}`;
+                    item.link = `${ele.url}`;
+                    item.date = new Date(ele.updated);
+                    item.content = ele.excerpt;
                     item.authorName = ele.author.name;
                     item.authorLink = ele.author.profileUrl;
+
+                    const urlTask = URLManager.urlTasksFromURL(ele.url);
+                    urlTasks = urlTasks.concat(urlTask);
 
                     parseTask.feed.addItem(item);
                 });
@@ -265,15 +291,15 @@ export default class ContentParser {
             }
         } else if (parseTask.type === 'author') {
             const feed = new FeedObject();
-            feed.title = `知乎专栏-${res.name}`;
+            feed.title = `知乎专栏-${res.title}`;
             feed.description = res.description;
             // feed.id = `https://zhuanlan.zhihu.com${res.url}`;
-            feed.id = `zhihu_${res.slug}`;
+            feed.id = `zhihu_${res.id}`;
             feed.link = `https://zhuanlan.zhihu.com${res.url}`;
             parseTask.feed = feed;
         }
         parseTask.content = res;
-        callback([], parseTask, null);
+        callback(urlTasks, parseTask, null);
     }
 
     parseSougouWeixin(task, callback) {
