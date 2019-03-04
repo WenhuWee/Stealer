@@ -450,10 +450,11 @@ export default class APIServer {
     getRssHub(params, callback) {
         const back = funcCheck(callback);
         const path = params.path;
+        const isForced = params.forced;
         if (path) {
             const id = `rsshub_${path}`;
             const url = `http://localhost:1200/${path}`;
-            this.getFeed(id, url, false, back);
+            this.getFeed(id, url, isForced, back);
         } else {
             back(this.commonErrorWithMsg('bad path'));
         }
