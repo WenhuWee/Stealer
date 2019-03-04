@@ -27,6 +27,9 @@ export default class ContentParser {
             'app.jike.ruguoapp.com': {
                 '/1.0/messages/showDetail': this.parseJKProfile,
             },
+            'localhost:1200': {
+                '/': this.parseRssHub,
+            },
         };
         this.captcha = new KerasCaptcha();
     }
@@ -472,5 +475,12 @@ export default class ContentParser {
             devLog('No Script,Maybe Auth Code');
         }
         callback(urlTasks, parseTask, null);
+    }
+
+    parseRssHub(task, callback) {
+        const parseTask = task.copy();
+        parseTask.feed = new FeedObject();
+        parseTask.feed.xmlContent = task.content;
+        callback([], parseTask, null);
     }
 }

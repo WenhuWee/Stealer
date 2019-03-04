@@ -102,7 +102,12 @@ export default class Spider {
                         this.crawlUrl(crawlUrl, feedObject, (feed, error) => {
                             devLog(error);
                             if (feed) {
-                                const xml = feed.generateRSSXML();
+                                let xml = null;
+                                if (feed.xmlContent) {
+                                    xml = feed.xmlContent;
+                                } else {
+                                    xml = feed.generateRSSXML();
+                                }
                                 if (xml) {
                                     const feedModel = new FeedStoreModel();
                                     feedModel.id = timerID;
@@ -187,6 +192,8 @@ export default class Spider {
                         }
                         mergedFeed2 = mergedFeed2.merge(feed);
                         if (mergedFeed2.items && mergedFeed2.items.size) {
+                            callback(mergedFeed2, null);
+                        } else if (mergedFeed2.xmlContent) {
                             callback(mergedFeed2, null);
                         } else {
                             callback(null, Error('no article'));

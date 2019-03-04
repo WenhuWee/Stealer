@@ -18,6 +18,7 @@ export default class APIServer {
                 zhihu: this.getZhihuFeed,
                 weixin: this.getWeixinFeed,
                 jike: this.getJikeFeed,
+                rsshub: this.getRssHub,
             },
             info: {
                 status: this.getCurrentStatus,
@@ -321,7 +322,11 @@ export default class APIServer {
                 if (err) {
                     error = this.commonErrorWithMsg(err.message);
                 } else if (feed) {
-                    data = feed.generateRSSXML();
+                    if (feed.xmlContent) {
+                        data = feed.xmlContent; 
+                    } else {
+                        data = feed.generateRSSXML();
+                    }
                     if (!data) {
                         error = this.commonErrorWithMsg('generate failed');
                     }
@@ -440,5 +445,17 @@ export default class APIServer {
             });
             back(res, null);
         });
+    }
+
+    getRssHub(params, callback) {
+        const back = funcCheck(callback);
+        const path = params.path;
+        if (path) {
+            const id = `rsshub_${path}`;
+            const url = `http://localhost:1200/${path}`;
+            this.getFeed(id, url, false, back);
+        } else {
+            back(this.commonErrorWithMsg('bad path'));
+        }
     }
 }

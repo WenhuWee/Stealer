@@ -11,6 +11,7 @@ export class FeedObject {
     link: string;
     items: Map;
     lastItemDate:Date;
+    xmlContent: string;
 
     constructor() {
         this.items = new Map();

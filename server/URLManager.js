@@ -252,6 +252,17 @@ function handleJikeUrl(url) {
     return tasks;
 }
 
+function handleRssHub(url) {
+    const tasks = [];
+    if (url) {
+        const contentTask = new URLTask();
+        contentTask.url = url;
+        contentTask.type = 'rsshub';
+        tasks.push(contentTask);
+    }
+    return tasks;
+}
+
 URLManager.urlHandler = {
     'zhuanlan.zhihu.com': {
         '/': handleZhihuZhuanlanUrl,
@@ -269,6 +280,9 @@ URLManager.urlHandler = {
     'app.jike.ruguoapp.com': {
         '/1.0/messages/showDetail': handleJikeUrl,
     },
+    'localhost:1200': {
+        '/': handleRssHub,
+    }
 };
 
 function getUrlHandler(url) {
