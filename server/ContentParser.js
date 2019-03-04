@@ -40,7 +40,6 @@ export default class ContentParser {
         if (parserSet) {
             parser = parserSet[path];
             if (!parser) {
-                // parser = parserSet['/'];
                 const paths = path.split('/');
                 let currentPath = '';
                 paths.forEach((ele, index) => {
@@ -52,10 +51,14 @@ export default class ContentParser {
                         }
                     }
                 });
+
+                if (!parser && parserSet['/']) {
+                    parser = parserSet['/'];
+                }
             }
         }
         if (!parser) {
-            parser = (task, callback) => { callback(null); };
+            parser = (task, callback) => { callback([], null, null); };
         }
         return parser;
     }
