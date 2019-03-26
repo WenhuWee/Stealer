@@ -17,25 +17,25 @@ if (process.env.NODE_ENV !== 'production') {
     app.use(require('morgan')('short'));
 }
 
-(function initWebpack() {
-    if (process.env.NODE_ENV !== 'production') {
-        const webpack = require('webpack');
-        const webpackConfig = require('./webpack/common.config');
+// (function initWebpack() {
+//     if (process.env.NODE_ENV !== 'production') {
+//         const webpack = require('webpack');
+//         const webpackConfig = require('./webpack/common.config');
 
-        const compiler = webpack(webpackConfig);
+//         const compiler = webpack(webpackConfig);
 
-        app.use(require('webpack-dev-middleware')(compiler, {
-            noInfo: true,
-            publicPath: webpackConfig.output.publicPath,
-        }));
+//         app.use(require('webpack-dev-middleware')(compiler, {
+//             noInfo: true,
+//             publicPath: webpackConfig.output.publicPath,
+//         }));
 
-        app.use(require('webpack-hot-middleware')(compiler, {
-            log: utils.devLog,
-            path: '/__webpack_hmr',
-            heartbeat: 10 * 1000,
-        }));
-    }
-}());
+//         app.use(require('webpack-hot-middleware')(compiler, {
+//             log: utils.devLog,
+//             path: '/__webpack_hmr',
+//             heartbeat: 10 * 1000,
+//         }));
+//     }
+// }());
 
 app.use(bodyParser.raw({ type: '*/*', inflate: false }));
 app.use('/image', Express.static(Path.join(__dirname, '/resource/image/')));
