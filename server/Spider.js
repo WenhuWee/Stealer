@@ -132,10 +132,11 @@ export default class Spider {
                                         if (feedModel.interval > 11) {
                                             if (feedModel.id.includes('rsshub')) {
                                                 feedModel.interval = 4;
+                                                timer.update(feedModel.interval);
                                             } else if (!feedModel.id.includes('weixin')) {
                                                 feedModel.interval = 6;
+                                                timer.update(feedModel.interval);
                                             }
-                                            timer.update(feedModel.interval);
                                         }
                                     }
                                     StoreManager.instance().setRSSSource(feedModel);
