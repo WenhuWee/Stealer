@@ -19,6 +19,7 @@ export default class ContentParser {
             },
             'weixin.sogou.com': {
                 '/weixin': this.parseSougouWeixin,
+                '/link': this.parseSougouWeixinLink,
             },
             'mp.weixin.qq.com': {
                 '/profile': this.parseWeixinProfile.bind(this),
@@ -307,6 +308,24 @@ export default class ContentParser {
         parseTask.content = res;
         callback(urlTasks, parseTask, null);
     }
+    parseSougouWeixinLink(task, callback) {
+        const $ = Cheerio.load(task.content, {
+            normalizeWhitespace: true,
+        });
+        let script = $('script').html();
+        if (script.length) {
+            const index = script.indexOf('window.location.replace');
+            script = script.substr(0, index);
+        }
+        const url = eval(script);
+
+        let urlTasks = [];
+        if (url) {
+            urlTasks = URLManager.urlTasksFromURL(url);
+        }
+        const parseTask = task.copy();
+        callback(urlTasks, parseTask, null);
+    }
 
     parseSougouWeixin(task, callback) {
         const $ = Cheerio.load(task.content, {
@@ -314,7 +333,10 @@ export default class ContentParser {
         });
         const firstItem = $('#sogou_vr_11002301_box_0');
         const aTag = firstItem.find('.gzh-box2 .img-box a');
-        const url = aTag.attr('href');
+        let url = aTag.attr('href');
+        if (!url.includes('http')) {
+            url = `https://weixin.sogou.com${url}`;
+        }
 
         const nameTag = firstItem.find('.gzh-box2 .txt-box a');
         const name = nameTag.text();
@@ -328,6 +350,13 @@ export default class ContentParser {
         }
 
         let urlTasks = [];
+        const b = Math.floor(100 * Math.random()) + 1;
+        let a = url.indexOf('url=');
+        const c = url.indexOf('&k='); 
+        if (a !== -1 && c === -1) {
+            a = url.substr(a + 4 + b, 1);
+            url += `&k=${b}&h=${a}`;
+        }
         utils.devLog(`sougou:${url}`);
         if (url) {
             urlTasks = URLManager.urlTasksFromURL(url);

@@ -270,6 +270,7 @@ URLManager.urlHandler = {
     },
     'weixin.sogou.com': {
         '/': handleSogouWeixinUrl,
+        '/link': handleSogouWeixinUrl,
         '/weixin': handleSogouWeixinUrl,
     },
     'mp.weixin.qq.com': {
