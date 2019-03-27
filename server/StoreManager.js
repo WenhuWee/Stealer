@@ -134,21 +134,31 @@ export default class StoreManager {
         if (source instanceof FeedStoreModel && source.isValid()) {
             const leveldb = this.leveldb;
 
-            this.leveldb.get(source.id, function (err, value) {
+            this.leveldb.get(source.id, (err, value) => {
                 let mergedSource = source;
                 if (value) {
                     const valueObj = safeJSONParse(value);
                     const oldSource = new FeedStoreModel(valueObj);
                     mergedSource = oldSource.merge(mergedSource);
+
+                    const currentDate = new Date();
+                    const baseDate = new Date('2019-4-1');
+                    if (currentDate > baseDate) {
+                        if (mergedSource.interval > 11) {
+                            if (mergedSource.id.includes('rsshub')) {
+                                mergedSource.interval = 4;
+                            }
+                        }
+                    }
                 }
                 const res = mergedSource.generateStoreObjectWithID();
-                const resJson = JSON.stringify(res)
-                leveldb.put(source.id, resJson, function (err) {
+                const resJson = JSON.stringify(res);
+                leveldb.put(source.id, resJson, (err) => {
                     if (callback) {
-                        callback(err,mergedSource);
+                        callback(err, mergedSource);
                     }
-                })
-            })
+                });
+            });
         }
     }
 

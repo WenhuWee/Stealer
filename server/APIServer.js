@@ -277,10 +277,16 @@ export default class APIServer {
         const back = funcCheck(callback);
         const name = params.name;
         const isForced = params.forced;
+        const interval = params.interval;
         if (name) {
             const id = `zhihu_${name}`;
             const url = `https://zhuanlan.zhihu.com/${name}`;
-            this.getFeed(id, url, isForced, back);
+            this.getFeed(id, url, isForced, (args) => {
+                if (interval && interval > 1) {
+                    this.updateInterval((id, url, interval));
+                }
+                back(args);
+            });
         } else {
             back(this.commonErrorWithMsg('bad name'));
         }
@@ -290,10 +296,16 @@ export default class APIServer {
         const back = funcCheck(callback);
         const name = params.name;
         const isForced = params.forced;
+        const interval = params.interval;
         if (name) {
             const id = `jike_${name}`;
             const url = `https://app.jike.ruguoapp.com/1.0/messages/showDetail?topicId=${name}`;
-            this.getFeed(id, url, isForced, back);
+            this.getFeed(id, url, isForced, (args) => {
+                if (interval && interval > 1) {
+                    this.updateInterval((id, url, interval));
+                }
+                back(args);
+            });
         } else {
             back(this.commonErrorWithMsg('bad name'));
         }
@@ -303,9 +315,15 @@ export default class APIServer {
         const back = funcCheck(callback);
         const name = params.name;
         const isForced = params.forced;
+        const interval = params.interval;
         if (name) {
             const url = `http://weixin.sogou.com/weixin?type=1&query=${name}`;
-            this.getFeed(name, url, isForced, back);
+            this.getFeed(name, url, isForced, (args) => {
+                if (interval && interval > 1) {
+                    this.updateInterval((name, url, interval));
+                }
+                back(args);
+            });
         } else {
             back(this.commonErrorWithMsg('bad url'));
         }
@@ -367,8 +385,8 @@ export default class APIServer {
     updateInterval(params, callback) {
         const back = funcCheck(callback);
         let url = params.url;
-        let id = params.id;
-        let interval = params.interval;
+        const id = params.id;
+        const interval = params.interval;
         if (url) {
             url = decodeURIComponent(url);
         }
@@ -451,10 +469,16 @@ export default class APIServer {
         const back = funcCheck(callback);
         const path = params.path;
         const isForced = params.forced;
+        const interval = params.interval;
         if (path) {
             const id = `rsshub_${path}`;
             const url = `http://localhost:1200/${path}`;
-            this.getFeed(id, url, isForced, back);
+            this.getFeed(id, url, isForced, (args) => {
+                if (interval && interval > 1) {
+                    this.updateInterval((id, url, interval));
+                }
+                back(args);
+            });
         } else {
             back(this.commonErrorWithMsg('bad path'));
         }

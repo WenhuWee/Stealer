@@ -352,7 +352,7 @@ export default class ContentParser {
         let urlTasks = [];
         const b = Math.floor(100 * Math.random()) + 1;
         let a = url.indexOf('url=');
-        const c = url.indexOf('&k='); 
+        const c = url.indexOf('&k=');
         if (a !== -1 && c === -1) {
             a = url.substr(a + 4 + b, 1);
             url += `&k=${b}&h=${a}`;
