@@ -133,8 +133,11 @@ export default class Spider {
                                             if (feedModel.id.includes('rsshub')) {
                                                 feedModel.interval = 4;
                                                 timer.update(feedModel.interval);
-                                            } else if (!feedModel.id.includes('weixin')) {
+                                            } else if (!feedModel.url.includes('sogou')) {
                                                 feedModel.interval = 6;
+                                                timer.update(feedModel.interval);
+                                            } else {
+                                                feedModel.interval = 12;
                                                 timer.update(feedModel.interval);
                                             }
                                         }
