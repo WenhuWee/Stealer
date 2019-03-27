@@ -141,15 +141,7 @@ export default class StoreManager {
                     const oldSource = new FeedStoreModel(valueObj);
                     mergedSource = oldSource.merge(mergedSource);
 
-                    const currentDate = new Date();
-                    const baseDate = new Date('2019-4-1');
-                    if (currentDate > baseDate) {
-                        if (mergedSource.interval > 11) {
-                            if (mergedSource.id.includes('rsshub')) {
-                                mergedSource.interval = 4;
-                            }
-                        }
-                    }
+                    
                 }
                 const res = mergedSource.generateStoreObjectWithID();
                 const resJson = JSON.stringify(res);

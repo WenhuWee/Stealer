@@ -1,11 +1,18 @@
-
 import URLManager from './URLManager';
 import ContentParser from './ContentParser';
 import StoreManager from './StoreManager';
-import { TimingCrawlTask } from '../Model/CrawlTask';
-import { FeedObject } from '../Model/FeedObject';
-import { devLog } from '../utils/misc';
-import { FeedStoreModel } from '../model/FeedStoreModel';
+import {
+    TimingCrawlTask
+} from '../Model/CrawlTask';
+import {
+    FeedObject
+} from '../Model/FeedObject';
+import {
+    devLog
+} from '../utils/misc';
+import {
+    FeedStoreModel
+} from '../model/FeedStoreModel';
 
 const FS = require('fs');
 const Path = require('path');
@@ -109,13 +116,28 @@ export default class Spider {
                                     xml = feed.generateRSSXML();
                                 }
                                 if (xml) {
-                                    const feedModel = new FeedStoreModel();
+                                    let feedModel = new FeedStoreModel();
                                     feedModel.id = timerID;
                                     feedModel.url = crawlUrl;
                                     feedModel.title = feed.title;
                                     feedModel.xml = xml;
                                     feedModel.updatedTime = new Date();
                                     feedModel.lastItemDate = feed.lastItemDate;
+                                    if (feedObj) {
+                                        feedModel = feedObj.merge(feedModel, { interval: true });
+                                    }
+                                    const currentDate = new Date();
+                                    const basedDate = new Date('2019-4-1');
+                                    if (currentDate < basedDate) {
+                                        if (feedModel.interval > 11) {
+                                            if (feedModel.id.includes('rsshub')) {
+                                                feedModel.interval = 4;
+                                            } else if (!feedModel.id.includes('weixin')) {
+                                                feedModel.interval = 6;
+                                            }
+                                            timer.update(feedModel.interval);
+                                        }
+                                    }
                                     StoreManager.instance().setRSSSource(feedModel);
                                 } else {
                                     StoreManager.instance().getRSSSource(timerID, crawlUrl, (errFeedObj) => {
@@ -167,7 +189,7 @@ export default class Spider {
                 callback(null, error);
             } else {
                 if (prevFeed) {
-                    parseTasks.forEach((ele)=>{
+                    parseTasks.forEach((ele) => {
                         if (ele.feed) {
                             ele.feed = ele.feed.merge(prevFeed);
                         } else {
@@ -257,7 +279,7 @@ export default class Spider {
         const url = 'https://mp.weixin.qq.com/profile?src=3&timestamp=1525446001&ver=1&signature=hQDpZ3Kj-jSImow1GKOSD9k5HYbv0VER36-NMwH5s07irTZWxIcRhPTgKLk8skE3Kg-s0SJU5tI9OFpFAEglEg==';
         this.crawlUrl(url, feedObject, (feed, err) => {
             if (feed) {
-                
+
             }
         });
     }

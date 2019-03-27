@@ -393,9 +393,9 @@ export default class APIServer {
         if ((url || id) && interval) {
             StoreManager.instance().updateTimerInterval(id, url, interval, (err, feed) => {
                 if (!err) {
-                    if (feed && feed.url) {
+                    if (feed && feed.id) {
                         this.spider.startTimerWithUrl(feed.id, feed.url, interval, null);
-                    } else if (url) {
+                    } else if (id || url) {
                         this.spider.startTimerWithUrl(id, url, interval, null);
                     }
                     callback(this.commonSuccessResponse);
