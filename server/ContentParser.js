@@ -358,12 +358,16 @@ export default class ContentParser {
         let a = url.indexOf('url=');
         const c = url.indexOf('&k=');
         if (a !== -1 && c === -1) {
-            a = url.substr(a + 4 + b, 1);
+            a = url.substr(a + 15 + b, 1);
             url += `&k=${b}&h=${a}`;
         }
         utils.devLog(`sougou:${url}`);
         if (url) {
             urlTasks = URLManager.urlTasksFromURL(url);
+            urlTasks.forEach((nextTask) => {
+                // eslint-disable-next-line no-param-reassign
+                nextTask.header = { Referer: task.url };
+            });
         }
 
         const parseTask = task.copy();
