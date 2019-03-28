@@ -174,7 +174,7 @@ function handleZhihuZhuanlanUrl(url) {
         const zhuanlanName = paths[1];
         if (zhuanlanName) {
             const contentTask = new URLTask();
-            contentTask.url = `https://zhuanlan.zhihu.com/api/columns/${zhuanlanName}/posts?limit=10`;
+            contentTask.url = `https://zhuanlan.zhihu.com/api/columns/${zhuanlanName}/articles?limit=10`;
             contentTask.type = 'content';
 
             const authorTask = new URLTask();
