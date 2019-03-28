@@ -277,14 +277,14 @@ export default class ContentParser {
                 let feedUpdatedTime = new Date();
                 data.forEach((ele, index) => {
                     if (index === 0) {
-                        feedUpdatedTime = new Date(ele.updated);
+                        feedUpdatedTime = new Date(ele.updated * 1000);
                     }
                     const item = new FeedItemObject();
                     item.title = ele.title;
                     item.id = utils.MD5(`${ele.url}`);
                     item.mergeID = `${ele.url}`;
                     item.link = `${ele.url}`;
-                    item.date = new Date(ele.updated);
+                    item.date = new Date(ele.updated * 1000);
                     item.content = ele.excerpt;
                     item.authorName = ele.author.name;
                     item.authorLink = ele.author.profileUrl;
