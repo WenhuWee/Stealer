@@ -225,6 +225,14 @@ export default class APIServer {
                     res.dbDocs.push(doc);
                 });
             }
+            res.dbDocs.sort((a, b) => {
+                if (a.lastItemDate > b.lastItemDate) {
+                    return -1;
+                } else if (a.lastItemDate < b.lastItemDate) {
+                    return 1;
+                }
+                return 0;
+            });
             callback(res);
         });
     }

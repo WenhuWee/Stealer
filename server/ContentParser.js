@@ -334,7 +334,11 @@ export default class ContentParser {
         const firstItem = $('#sogou_vr_11002301_box_0');
         const aTag = firstItem.find('.gzh-box2 .img-box a');
         let url = aTag.attr('href');
-        if (!url.includes('http')) {
+        if (url == null) {
+            callback([], [], null);
+            return;
+        }
+        if (url && !url.includes('http')) {
             url = `https://weixin.sogou.com${url}`;
         }
 
