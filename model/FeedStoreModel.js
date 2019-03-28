@@ -13,7 +13,6 @@ export class FeedStoreModel {
     errTime:Date;
 
     constructor(obj) {
-        this.interval = 12;
         if (typeof obj === 'object') {
             if (obj.id) {
                 this.id = obj.id;

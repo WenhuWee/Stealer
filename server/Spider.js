@@ -116,20 +116,18 @@ export default class Spider {
                                     xml = feed.generateRSSXML();
                                 }
                                 if (xml) {
-                                    let feedModel = new FeedStoreModel();
+                                    const feedModel = new FeedStoreModel();
                                     feedModel.id = timerID;
                                     feedModel.url = crawlUrl;
                                     feedModel.title = feed.title;
                                     feedModel.xml = xml;
                                     feedModel.updatedTime = new Date();
                                     feedModel.lastItemDate = feed.lastItemDate;
-                                    if (feedObj) {
-                                        feedModel = feedObj.merge(feedModel, { interval: true });
-                                    }
+
                                     const currentDate = new Date();
                                     const basedDate = new Date('2019-4-1');
                                     if (currentDate < basedDate) {
-                                        if (feedModel.interval > 11) {
+                                        if (feedObj.interval > 11) {
                                             if (feedModel.id.includes('rsshub')) {
                                                 feedModel.interval = 4;
                                                 timer.update(feedModel.interval);

@@ -140,8 +140,9 @@ export default class StoreManager {
                     const valueObj = safeJSONParse(value);
                     const oldSource = new FeedStoreModel(valueObj);
                     mergedSource = oldSource.merge(mergedSource);
-
-                    
+                }
+                if (mergedSource.interval == null) {
+                    mergedSource.interval = 12;
                 }
                 const res = mergedSource.generateStoreObjectWithID();
                 const resJson = JSON.stringify(res);

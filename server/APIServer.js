@@ -367,11 +367,13 @@ export default class APIServer {
                     feedSource.lastItemDate = feed.lastItemDate;
                     feedSource.xml = data;
                     feedSource.updatedTime = new Date();
-                    if (storeFeed) {
-                        feedSource.interval = feedObj.interval;
-                    }
-                    StoreManager.instance().setRSSSource(feedSource);
-                    this.spider.startTimerWithUrl(id, url, feedSource.interval, feedSource.updatedTime);
+
+                    const spider = this.spider;
+                    StoreManager.instance().setRSSSource(feedSource, (setErr, newSource) => {
+                        if (newSource) {
+                            spider.startTimerWithUrl(id, url, newSource.interval, feedSource.updatedTime);
+                        }
+                    });
                     callback(data, null);
                 } else if (error) {
                     feedSource.errTime = new Date();
