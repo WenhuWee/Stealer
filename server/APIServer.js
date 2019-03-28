@@ -205,6 +205,14 @@ export default class APIServer {
         res.timers = timers;
         StoreManager.instance().getAllDocs((docs) => {
             if (Array.isArray(docs)) {
+                docs.sort((a, b) => {
+                    if (a.lastItemDate > b.lastItemDate) {
+                        return -1;
+                    } else if (a.lastItemDate < b.lastItemDate) {
+                        return 1;
+                    }
+                    return 0;
+                });
                 res.dbDocs = [];
                 docs.forEach((ele) => {
                     const doc = ele.generateStoreObjectWithoutXML();
@@ -225,14 +233,6 @@ export default class APIServer {
                     res.dbDocs.push(doc);
                 });
             }
-            res.dbDocs.sort((a, b) => {
-                if (a.lastItemDate > b.lastItemDate) {
-                    return -1;
-                } else if (a.lastItemDate < b.lastItemDate) {
-                    return 1;
-                }
-                return 0;
-            });
             callback(res);
         });
     }
