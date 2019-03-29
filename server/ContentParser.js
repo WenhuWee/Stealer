@@ -358,7 +358,7 @@ export default class ContentParser {
         let a = url.indexOf('url=');
         const c = url.indexOf('&k=');
         if (a !== -1 && c === -1) {
-            a = url.substr(a + 15 + b, 1);
+            a = url.substr(a + 27 + b, 1);
             url += `&k=${b}&h=${a}`;
         }
         utils.devLog(`sougou:${url}`);
