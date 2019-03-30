@@ -203,15 +203,26 @@ export default class APIServer {
             return 0;
         });
 
-        res.timers = timers;
+        res.shouldAutoUpdateToken = StoreManager.instance().shouldAutoUpdateToken;
+        res.token = StoreManager.instance().token;
+
         StoreManager.instance().getAllDocs((docs) => {
             if (Array.isArray(docs)) {
                 docs.sort((a, b) => {
-                    if (a.lastItemDate > b.lastItemDate) {
-                        return -1;
-                    } else if (a.lastItemDate < b.lastItemDate) {
-                        return 1;
+                    if (a.lastItemDate && b.lastItemDate) {
+                        if (a.lastItemDate > b.lastItemDate) {
+                            return -1;
+                        } else if (a.lastItemDate < b.lastItemDate) {
+                            return 1;
+                        }
+                    } else if (a.updatedTime && b.updatedTime) {
+                        if (a.updatedTime > b.updatedTime) {
+                            return -1;
+                        } else if (a.updatedTime < b.updatedTime) {
+                            return 1;
+                        }
                     }
+                    
                     return 0;
                 });
                 res.dbDocs = [];
@@ -233,6 +244,7 @@ export default class APIServer {
                     }
                     res.dbDocs.push(doc);
                 });
+                res.timers = timers;
             }
             callback(res);
         });
@@ -436,6 +448,7 @@ export default class APIServer {
         const token = params.token;
         if (token) {
             StoreManager.instance().token = parseInt(token, 10);
+            StoreManager.instance().shouldAutoUpdateToken = false;
             callback(this.commonSuccessResponse);
         } else {
             callback(this.commonErrorResponse);

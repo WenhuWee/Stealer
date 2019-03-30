@@ -35,6 +35,7 @@ export default class StoreManager {
         this.cookiesdb = new Nedb({ filename: cookiesdbPath, autoload: true });
 
         this.token = 27;
+        this.shouldAutoUpdateToken = true;
 
         // this._initTestData();
     }

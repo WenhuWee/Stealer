@@ -314,11 +314,15 @@ export default class ContentParser {
             normalizeWhitespace: true,
         });
         let script = $('script').html();
+        let url = '';
         if (script.length) {
+            StoreManager.instance().shouldAutoUpdateToken = false;
             const index = script.indexOf('window.location.replace');
             script = script.substr(0, index);
+            url = eval(script);
+        } else {
+            StoreManager.instance().shouldAutoUpdateToken = true;
         }
-        const url = eval(script);
 
         let urlTasks = [];
         if (url) {
@@ -353,15 +357,41 @@ export default class ContentParser {
             const params = QS.parse(taskUrlObject.query);
             id = params.query;
         }
+        if (StoreManager.instance().shouldAutoUpdateToken) {
+            const scripts = $('script');
+            let resScript = null;
+            scripts.each((index, scriptObj) => {
+                const script = $(scriptObj).html();
+                if (script && script.includes('click contextmenu')) {
+                    resScript = script;
+                }
+            });
+            if (resScript) {
+                const preAnchor = 'click contextmenu",function(){';
+                const postAnchor = '})';
+                resScript = resScript.substring(
+                    resScript.lastIndexOf(preAnchor) + preAnchor.length,
+                    resScript.lastIndexOf(postAnchor) - postAnchor.length,
+                    );
+                const funcObj = {};
+                funcObj.href = url;
+                // eslint-disable-next-line no-new-func
+                funcObj.func = Function(resScript);
+                funcObj.func();
+                url = funcObj.href;
+            } else {
+                const b = Math.floor(100 * Math.random()) + 1;
+                let a = url.indexOf('url=');
+                const c = url.indexOf('&k=');
+                if (a !== -1 && c === -1) {
+                    a = url.substr(a + StoreManager.instance().token + b, 1);
+                    url += `&k=${b}&h=${a}`;
+                }
+            }
+        }
 
         let urlTasks = [];
-        const b = Math.floor(100 * Math.random()) + 1;
-        let a = url.indexOf('url=');
-        const c = url.indexOf('&k=');
-        if (a !== -1 && c === -1) {
-            a = url.substr(a + StoreManager.instance().token + b, 1);
-            url += `&k=${b}&h=${a}`;
-        }
+        
         utils.devLog(`sougou:${url}`);
         if (url) {
             urlTasks = URLManager.urlTasksFromURL(url);
