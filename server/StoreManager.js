@@ -34,6 +34,8 @@ export default class StoreManager {
         const cookiesdbPath = Path.join(dirPath, `${cookiesFilePrefix}db`);
         this.cookiesdb = new Nedb({ filename: cookiesdbPath, autoload: true });
 
+        this.token = 27;
+
         // this._initTestData();
     }
 

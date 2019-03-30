@@ -26,6 +26,7 @@ export default class APIServer {
             update: {
                 interval: this.updateInterval,
                 cookies: this.updateCookies,
+                sogouToken: this.updateSogouToken,
             },
             del: {
                 zhihu: this.delFeed,
@@ -425,6 +426,16 @@ export default class APIServer {
         if (host && path && cookies) {
             this.spider.updateCookies(host, path, cookies);
             StoreManager.instance().setCookies(host, path, cookies);
+            callback(this.commonSuccessResponse);
+        } else {
+            callback(this.commonErrorResponse);
+        }
+    }
+
+    updateSogouToken(params, callback) {
+        const token = params.token;
+        if (token) {
+            StoreManager.instance().token = parseInt(token, 10);
             callback(this.commonSuccessResponse);
         } else {
             callback(this.commonErrorResponse);

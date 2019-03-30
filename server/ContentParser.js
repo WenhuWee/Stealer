@@ -4,6 +4,7 @@ import { ParseTask, URLTask } from '../Model/CrawlTask';
 import { FeedObject, FeedItemObject } from '../Model/FeedObject';
 import URLManager from './URLManager';
 import KerasCaptcha from '../captcha/kerasCaptcha';
+import StoreManager from './StoreManager';
 
 const Async = require('async');
 const Cheerio = require('cheerio');
@@ -358,7 +359,7 @@ export default class ContentParser {
         let a = url.indexOf('url=');
         const c = url.indexOf('&k=');
         if (a !== -1 && c === -1) {
-            a = url.substr(a + 27 + b, 1);
+            a = url.substr(a + StoreManager.instance().token + b, 1);
             url += `&k=${b}&h=${a}`;
         }
         utils.devLog(`sougou:${url}`);
