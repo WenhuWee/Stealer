@@ -380,8 +380,8 @@ export default class APIServer {
                     feedSource.lastItemDate = feed.lastItemDate;
                     feedSource.xml = data;
                     feedSource.updatedTime = new Date();
-                    feedSource.errMsg = null;
-                    feedSource.errMsg = null;
+                    feedSource.errTime = '';
+                    feedSource.errMsg = '';
 
                     const spider = this.spider;
                     StoreManager.instance().setRSSSource(feedSource, (setErr, newSource) => {

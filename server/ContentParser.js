@@ -387,13 +387,14 @@ export default class ContentParser {
 
                 let token = null;
                 try {
+                    // eslint-disable-next-line no-eval
                     token = eval(tokenScript);
                     funcObj.getUrl();
                 } catch (error) {
                     utils.devLog(error);
                 }
                 if (token) {
-                    StoreManager.instance().token = token;
+                    StoreManager.instance().token = token; 
                 }
                 url = funcObj.href;
             }
@@ -438,7 +439,7 @@ export default class ContentParser {
         }
         // console.log(task.url);
         // console.log(task.content);
-        
+
         content.find('img').each((index, img) => {
             const src = $(img).attr('data-src');
             $(img).attr('src', src);
@@ -498,7 +499,7 @@ export default class ContentParser {
                         const currentDate = new Date();
 
                         if (Array.isArray(msgList)) {
-                            msgList.every((ele,index) => {
+                            msgList.every((ele, index) => {
                                 if (index > 10) {
                                     return false;
                                 }
@@ -559,8 +560,6 @@ export default class ContentParser {
                     }
                 }
             }
-        } else {
-            devLog('No Script,Maybe Auth Code');
         }
         callback(urlTasks, parseTask, null);
     }
@@ -569,6 +568,16 @@ export default class ContentParser {
         const parseTask = task.copy();
         parseTask.feed = new FeedObject();
         parseTask.feed.xmlContent = task.content;
+
+        const preAnchor = '<pubDate>';
+        const postAnchor = '</pubDate>';
+        const lastItemDate = task.content.substring(
+                    task.content.indexOf(preAnchor) + preAnchor.length,
+                    task.content.indexOf(postAnchor),
+                    );
+        if (lastItemDate) {
+            parseTask.feed.lastItemDate = new Date(lastItemDate);
+        }
         callback([], parseTask, null);
     }
 }
