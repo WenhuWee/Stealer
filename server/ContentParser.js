@@ -375,6 +375,8 @@ export default class ContentParser {
                     );
                 const funcObj = {};
                 funcObj.href = url;
+                // eslint-disable-next-line no-new-func
+                funcObj.getUrl = Function(resScript);
 
                 const preTokenAnchor = '(a+';
                 const postTokenAnchor = '+b,1)';
@@ -382,8 +384,6 @@ export default class ContentParser {
                     resScript.lastIndexOf(preTokenAnchor) + preTokenAnchor.length,
                     resScript.lastIndexOf(postTokenAnchor),
                     );
-                // eslint-disable-next-line no-new-func
-                funcObj.getToken = Function(tokenScript);
 
                 let token = null;
                 try {
@@ -394,7 +394,7 @@ export default class ContentParser {
                     utils.devLog(error);
                 }
                 if (token) {
-                    StoreManager.instance().token = token; 
+                    StoreManager.instance().token = token;
                 }
                 url = funcObj.href;
             }
@@ -578,6 +578,27 @@ export default class ContentParser {
         if (lastItemDate) {
             parseTask.feed.lastItemDate = new Date(lastItemDate);
         }
+
+        const preTitleAnchor = '<title><![CDATA[';
+        const postTitleAnchor = ']]></title>';
+        const title = task.content.substring(
+                    task.content.indexOf(preTitleAnchor) + preTitleAnchor.length,
+                    task.content.indexOf(postTitleAnchor),
+                    );
+        if (title) {
+            parseTask.feed.title = title;
+        }
+
+        const preLinkAnchor = '<link>';
+        const postLinkAnchor = '</link>';
+        const link = task.content.substring(
+                    task.content.indexOf(preLinkAnchor) + preLinkAnchor.length,
+                    task.content.indexOf(postLinkAnchor),
+                    );
+        if (link) {
+            parseTask.feed.link = link;
+        }
+
         callback([], parseTask, null);
     }
 }

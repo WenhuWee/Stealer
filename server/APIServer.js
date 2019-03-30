@@ -377,6 +377,7 @@ export default class APIServer {
                 if (data) {
                     devLog('From Real Time');
                     feedSource.title = feed.title;
+                    feedSource.link = feed.link;
                     feedSource.lastItemDate = feed.lastItemDate;
                     feedSource.xml = data;
                     feedSource.updatedTime = new Date();

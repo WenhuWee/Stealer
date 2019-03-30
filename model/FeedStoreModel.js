@@ -3,6 +3,7 @@ export class FeedStoreModel {
     id: string;
     title: String;
     url: string;
+    link: string;
     xml: string;
     lastItemDate:Date;
     updatedTime:Date;
@@ -18,6 +19,7 @@ export class FeedStoreModel {
                 this.id = obj.id;
                 this.title = obj.title;
                 this.url = obj.url;
+                this.link = obj.link;
                 this.xml = obj.xml;
                 if (obj.lastItemDate) {
                     this.lastItemDate = new Date(obj.lastItemDate);
@@ -60,9 +62,8 @@ export class FeedStoreModel {
                 feed[key] = this[key];
             });
             return feed;
-        } else {
-            return null;
         }
+        return null;
     }
 
     generateStoreObjectWithoutXML() {
@@ -75,9 +76,8 @@ export class FeedStoreModel {
                 }
             });
             return feed;
-        } else {
-            return null;
         }
+        return null;
     }
 
     merge(newFeed:FeedStoreModel, exceptProp:Object = {}) {
