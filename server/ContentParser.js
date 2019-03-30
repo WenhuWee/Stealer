@@ -368,25 +368,42 @@ export default class ContentParser {
             });
             if (resScript) {
                 const preAnchor = 'click contextmenu",function(){';
-                const postAnchor = '})';
+                const postAnchor = '})})';
                 resScript = resScript.substring(
                     resScript.lastIndexOf(preAnchor) + preAnchor.length,
-                    resScript.lastIndexOf(postAnchor) - postAnchor.length,
+                    resScript.lastIndexOf(postAnchor),
                     );
                 const funcObj = {};
                 funcObj.href = url;
+
+                const preTokenAnchor = '(a+';
+                const postTokenAnchor = '+b,1)';
+                const tokenScript = resScript.substring(
+                    resScript.lastIndexOf(preTokenAnchor) + preTokenAnchor.length,
+                    resScript.lastIndexOf(postTokenAnchor),
+                    );
                 // eslint-disable-next-line no-new-func
-                funcObj.func = Function(resScript);
-                funcObj.func();
-                url = funcObj.href;
-            } else {
-                const b = Math.floor(100 * Math.random()) + 1;
-                let a = url.indexOf('url=');
-                const c = url.indexOf('&k=');
-                if (a !== -1 && c === -1) {
-                    a = url.substr(a + StoreManager.instance().token + b, 1);
-                    url += `&k=${b}&h=${a}`;
+                funcObj.getToken = Function(tokenScript);
+
+                let token = null;
+                try {
+                    token = eval(tokenScript);
+                    funcObj.getUrl();
+                } catch (error) {
+                    utils.devLog(error);
                 }
+                if (token) {
+                    StoreManager.instance().token = token;
+                }
+                url = funcObj.href;
+            }
+        } else {
+            const b = Math.floor(100 * Math.random()) + 1;
+            let a = url.indexOf('url=');
+            const c = url.indexOf('&k=');
+            if (a !== -1 && c === -1) {
+                a = url.substr(a + StoreManager.instance().token + b, 1);
+                url += `&k=${b}&h=${a}`;
             }
         }
 
