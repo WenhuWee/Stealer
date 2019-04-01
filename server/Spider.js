@@ -123,6 +123,7 @@ export default class Spider {
                                     feedModel.xml = xml;
                                     feedModel.updatedTime = new Date();
                                     feedModel.lastItemDate = feed.lastItemDate;
+                                    feedModel.link = feed.link;
 
                                     const currentDate = new Date();
                                     const basedDate = new Date('2019-4-1');
