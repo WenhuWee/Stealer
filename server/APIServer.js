@@ -222,7 +222,6 @@ export default class APIServer {
                             return 1;
                         }
                     }
-                    
                     return 0;
                 });
                 res.dbDocs = [];
@@ -230,7 +229,7 @@ export default class APIServer {
                     const doc = ele.generateStoreObjectWithoutXML();
 
                     if (ele.lastItemDate) {
-                        doc.lastItemDate = ele.lastItemDate.toLocaleString('en-US', { timeZone: 'Asia/Shanghai' });
+                        doc.lastItemDate = ele.lastItemDate.toLocaleString('en-US');
                     }
 
                     if (ele.errTime) {
