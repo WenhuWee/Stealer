@@ -230,7 +230,6 @@ export default class APIServer {
 
                     if (ele.lastItemDate) {
                         doc.lastItemDate = ele.lastItemDate.toLocaleString('en-US', { timeZone: 'Asia/Shanghai' });
-                        doc.lastItemDateLocal = ele.lastItemDate.toLocaleString('en-US');
                     }
 
                     if (ele.errTime) {

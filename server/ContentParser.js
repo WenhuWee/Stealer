@@ -576,7 +576,7 @@ export default class ContentParser {
                     task.content.indexOf(postAnchor),
                     );
         if (lastItemDate) {
-            parseTask.feed.lastItemDate = new Date(lastItemDate);
+            parseTask.feed.lastItemDate = new Date(Date.parse(lastItemDate));
         }
 
         const preTitleAnchor = '<title><![CDATA[';
