@@ -229,7 +229,8 @@ export default class APIServer {
                     const doc = ele.generateStoreObjectWithoutXML();
 
                     if (ele.lastItemDate) {
-                        doc.lastItemDate = ele.lastItemDate.toLocaleString('en-US');
+                        doc.lastItemDate = ele.lastItemDate.toLocaleString('en-US', { timeZone: 'Asia/Shanghai' });
+                        doc.lastItemDateLocal = ele.lastItemDate.toLocaleString('en-US');
                     }
 
                     if (ele.errTime) {
