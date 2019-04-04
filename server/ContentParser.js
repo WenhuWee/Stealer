@@ -577,13 +577,14 @@ export default class ContentParser {
                     );
         if (lastItemDate) {
             const itemDate = new Date(lastItemDate);
-
-            const localOffset = new Date().getTimezoneOffset();
-            const itemOffset = itemDate.getTimezoneOffset();
-            if (itemOffset !== -480 && localOffset === itemOffset) {
-                itemDate.setUTCHours(itemDate.getUTCHours() - (itemOffset - 480)/6);
+            const currentDate = new Date();
+            if (itemDate > currentDate) {
+                const localOffset = currentDate.getTimezoneOffset();
+                const hours = itemDate.getUTCHours();
+                const newHours = hours - (localOffset + 480)/60;
+                itemDate.setUTCHours(newHours); 
             }
-            parseTask.feed.lastItemDate = new Date(Date.parse(lastItemDate));
+            parseTask.feed.lastItemDate = itemDate;
         }
 
         const preTitleAnchor = '<title><![CDATA[';
