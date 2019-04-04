@@ -581,7 +581,7 @@ export default class ContentParser {
             const localOffset = new Date().getTimezoneOffset();
             const itemOffset = itemDate.getTimezoneOffset();
             if (itemOffset != -480 && localOffset === itemOffset) {
-                itemDate.setUTCHours((itemOffset + 480)/6);
+                itemDate.setUTCHours((itemOffset - 480)/6);
             }
             parseTask.feed.lastItemDate = new Date(Date.parse(lastItemDate));
         }
