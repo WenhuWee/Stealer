@@ -19,7 +19,7 @@ export default class URLManager {
                 '/': '',
             },
             'weixin.sogou.com':{
-                '/': {'Cookie':'IPLOC=US; sct=15;SNUID=1C552EB96762E32B9C3F1C4C67550CD8; PHPSESSID=1t83c9p97830i39oavngbiu4v7; JSESSIONID=aaaQZ8Q61mjqY7ZmVs-Mw; ABTEST=4|1552484017|v1; weixinIndexVisited=1; SUID=03887A7B2208990A00000000599642E6; SUID=03887A7B1E24940A00000000599642E6; SUV=00CB25C63D8798C2569B0E75377E9057'}
+                '/': {'Cookie':'IPLOC=US; SUID=7A3348DF2208990A000000005C9A264A; SUV=00444985DF48337A5C9A264C3B461035; sct=11; SNUID=A4F501007B7EFA92166123437CEF02D2; ABTEST=0|1553606804|v1; weixinIndexVisited=1; JSESSIONID=aaawl7ynIdgdFhzLr15Mw; PHPSESSID=o7e8fm6pbfggkfn278755vh4b7'}
             }
         };
 
@@ -124,7 +124,7 @@ export default class URLManager {
         }
         let newHeader = hostRule[path];
         if (newHeader) {
-            newHeader = Object.assign(header, newHeader);
+            newHeader = Object.assign(newHeader, header);
         } else {
             newHeader = header;
         }
