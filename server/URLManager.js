@@ -14,23 +14,9 @@ export default class URLManager {
 
         this.currentOption = this.initialOption;
 
-        this.defaultHeader = {
-            'zhuanlan.zhihu.com': {
-                '/': '',
-            },
-            'weixin.sogou.com':{
-                '/': {'Cookie':'IPLOC=US; SUID=7A3348DF2208990A000000005C9A264A; SUV=00444985DF48337A5C9A264C3B461035; sct=11; SNUID=A4F501007B7EFA92166123437CEF02D2; ABTEST=0|1553606804|v1; weixinIndexVisited=1; JSESSIONID=aaawl7ynIdgdFhzLr15Mw; PHPSESSID=o7e8fm6pbfggkfn278755vh4b7'}
-            }
-        };
+        this.defaultCookie = {};
 
-        const manager = this;
-        StoreManager.instance().getCookies(null, null, (cookies) => {
-            if (cookies) {
-                cookies.forEach((cookie) => {
-                    manager.updateCookies(cookie.host, cookie.path, cookie.cookies);
-                });
-            }
-        });
+        this.defaultHeader = {};
     }
 
     start(option) {
@@ -90,10 +76,6 @@ export default class URLManager {
         }
     }
 
-    updateCookies(host, path, cookies) {
-        this._setDefaultHeader(host, path, {'Cookie':cookies});
-    }
-
     requestURL(url, callback) {
         const contentTask = new URLTask();
         contentTask.url = url;
@@ -134,10 +116,23 @@ export default class URLManager {
     }
 
     _requestURL(task, callback) {
+        const manager = this;
+
         const url = Url.parse(task.url);
         let headers = this._getDefaultHeader(url.host, url.pathname) || {};
         if (task.header) {
             headers = Object.assign(headers, task.header);
+        }
+
+        let cookie = this.defaultCookie[url.host];
+        if (cookie) {
+            const cookieArr = [];
+            const keys = Object.keys(cookie);
+            keys.forEach((key) => {
+                cookieArr.push(`${key}=${cookie[key]}`);
+            });
+            cookie = cookieArr.join(';');
+            headers['cookie'] = cookie;
         }
         // console.log(headers);
 
@@ -159,6 +154,27 @@ export default class URLManager {
                 parseTask.error = error;
                 callback(parseTask);
             } else {
+                const setCookies = response.headers['set-cookie'];
+                if (setCookies) {
+                    let resCookie = {};
+                    setCookies.forEach((setCookie) => {
+                        const eles = setCookie.split(';');
+                        if (eles) {
+                            const first = eles[0];
+                            const elekv = first.split('=');
+                            const k = elekv[0];
+                            const v = elekv[1];
+                            resCookie[k] = v;
+                        }
+                    });
+                    if (resCookie) {
+                        const defaultCookie = manager.defaultCookie[response.request.host];
+                        if (defaultCookie) {
+                            resCookie = Object.assign(defaultCookie, resCookie);
+                        }
+                        manager.defaultCookie[response.request.host] = resCookie;
+                    }
+                }
                 parseTask.content = body;
                 callback(parseTask);
             }

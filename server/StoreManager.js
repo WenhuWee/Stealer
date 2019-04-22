@@ -10,7 +10,6 @@ const LevelDB = require('levelup');
 let instance = null;
 
 const filePrefix = 'Stealer_';
-const cookiesFilePrefix = 'Stealer_cookies_';
 
 export default class StoreManager {
     static instance() {
@@ -31,9 +30,6 @@ export default class StoreManager {
         const dbPath = Path.join(dirPath, `${filePrefix}db`);
         this.leveldb = new LevelDB(dbPath);
 
-        const cookiesdbPath = Path.join(dirPath, `${cookiesFilePrefix}db`);
-        this.cookiesdb = new Nedb({ filename: cookiesdbPath, autoload: true });
-
         this.token = 27;
         this.shouldAutoUpdateToken = true;
 
@@ -47,10 +43,6 @@ export default class StoreManager {
 
         const rimraf = require('rimraf');
         rimraf.sync(dbPath);
-
-        const cookiesdbPath = Path.join(dirPath, `${cookiesFilePrefix}db`);
-        FS.unlink(cookiesdbPath, () => {
-        });
     }
 
     getAllDocs(callback) {
@@ -178,35 +170,6 @@ export default class StoreManager {
                     callback(oldSource);
                 } else {
                     callback(null);
-                }
-            });
-        }
-    }
-
-    getCookies(host, pathName, callback) {
-        if (callback) {
-            const searchObj = {};
-            if (host && pathName) {
-                const id = `${host}${pathName}`;
-                searchObj['_id'] = id;
-            }
-            this.cookiesdb.find(searchObj, (err, docs) => {
-                if (docs.length) {
-                    callback(docs);
-                } else {
-                    callback(null);
-                }
-            });
-        }
-    }
-
-    setCookies(host, pathName, cookies) {
-        if (host && pathName && cookies) {
-            const id = `${host}${pathName}`;
-            const insertRes = {'_id': id, 'host': host, 'path': pathName, 'cookies': cookies};
-            this.cookiesdb.insert(insertRes, (insertErr, insertNewDocs) => {
-                if (insertNewDocs) {
-
                 }
             });
         }

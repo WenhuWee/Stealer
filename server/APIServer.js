@@ -25,7 +25,6 @@ export default class APIServer {
             },
             update: {
                 interval: this.updateInterval,
-                cookies: this.updateCookies,
                 sogouToken: this.updateSogouToken,
             },
             del: {
@@ -430,19 +429,6 @@ export default class APIServer {
             });
         } else {
             back(this.commonErrorWithMsg('bad url'));
-        }
-    }
-
-    updateCookies(params, callback) {
-        let host = params.host;
-        let path = params.path;
-        let cookies = params.cookies;
-        if (host && path && cookies) {
-            this.spider.updateCookies(host, path, cookies);
-            StoreManager.instance().setCookies(host, path, cookies);
-            callback(this.commonSuccessResponse);
-        } else {
-            callback(this.commonErrorResponse);
         }
     }
 
