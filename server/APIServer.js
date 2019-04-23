@@ -302,7 +302,7 @@ export default class APIServer {
             const url = `https://zhuanlan.zhihu.com/${name}`;
             this.getFeed(id, url, isForced, (args) => {
                 if (interval && interval > 1) {
-                    this.updateInterval((id, url, interval));
+                    this.updateInterval({ id, url, interval });
                 }
                 back(args);
             });
@@ -321,7 +321,7 @@ export default class APIServer {
             const url = `https://app.jike.ruguoapp.com/1.0/messages/showDetail?topicId=${name}`;
             this.getFeed(id, url, isForced, (args) => {
                 if (interval && interval > 1) {
-                    this.updateInterval((id, url, interval));
+                    this.updateInterval({ id, url, interval });
                 }
                 back(args);
             });
@@ -339,7 +339,7 @@ export default class APIServer {
             const url = `http://weixin.sogou.com/weixin?type=1&query=${name}`;
             this.getFeed(name, url, isForced, (args) => {
                 if (interval && interval > 1) {
-                    this.updateInterval((name, url, interval));
+                    this.updateInterval({ name, url, interval });
                 }
                 back(args);
             });
@@ -422,9 +422,9 @@ export default class APIServer {
                     } else if (id || url) {
                         this.spider.startTimerWithUrl(id, url, interval, null);
                     }
-                    callback(this.commonSuccessResponse);
+                    back(this.commonSuccessResponse);
                 } else {
-                    callback(this.commonErrorResponse);
+                    back(this.commonErrorResponse);
                 }
             });
         } else {
@@ -492,12 +492,17 @@ export default class APIServer {
         const path = params.path;
         const isForced = params.forced;
         const interval = params.interval;
+        const filter = params.filter;
         if (path) {
             const id = `rsshub_${path}`;
-            const url = `http://localhost:1200/${path}`;
+            let url = `http://localhost:1200/${path}`;
+            if (filter) {
+                const prefix = url.includes('?') ? '&' : '?';
+                url = `${url}${prefix}filter=${encodeURIComponent(filter)}`;
+            }
             this.getFeed(id, url, isForced, (args) => {
-                if (interval && interval > 1) {
-                    this.updateInterval((id, url, interval));
+                if (interval && interval > 0) {
+                    this.updateInterval({ id, url, interval });
                 }
                 back(args);
             });
