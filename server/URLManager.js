@@ -14,7 +14,21 @@ export default class URLManager {
 
         this.currentOption = this.initialOption;
 
-        this.defaultCookie = {};
+        const us = {
+            SUV:'004676817B7A8EDF5CBA48EF6B827329',
+            SNUID:'0A0E4A5D7075F7DF7F3FDD9671882029',
+            JSESSIONID:'aaarJZBKNIBMH6yuXT0Ow'
+        };
+
+        const cn = {
+            SUV:'00444985DF48337A5C9A264C3B461035',
+            SNUID:'4FEA6461BCBE3C12E0CDDCF5BCCBD956',
+            JSESSIONID:'aaawl7ynIdgdFhzLr15Mw'
+        };
+
+        this.defaultCookie = {
+            'weixin.sogou.com': us
+        };
 
         this.defaultHeader = {};
     }
