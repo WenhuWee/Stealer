@@ -16,7 +16,7 @@ export default class URLManager {
 
         const us = {
             SUV:'004676817B7A8EDF5CBA48EF6B827329',
-            SNUID:'0A0E4A5D7075F7DF7F3FDD9671882029',
+            SNUID:'D5CCD8C2A5A023114F16F390A5451C58',
             JSESSIONID:'aaarJZBKNIBMH6yuXT0Ow'
         };
 
