@@ -23,8 +23,10 @@ export default class URLManager {
         };
 
         this.defaultCookie = {
-            'weixin.sogou.com': us
+            'weixin.sogou.com': us,
         };
+
+        this.tempCookie = {};
 
         this.defaultHeader = {};
     }
@@ -135,6 +137,16 @@ export default class URLManager {
         }
 
         let cookie = this.defaultCookie[url.host];
+        const tempCookie = this.tempCookie[url.host];
+        if (cookie && tempCookie) {
+            const setDate = tempCookie.setDate;
+            const now = new Date();
+            if (setDate > now) {
+                cookie = Object.assign(cookie, tempCookie);
+            } else {
+                this.tempCookie[url.host] = null;
+            }
+        }
         if (cookie) {
             const cookieArr = [];
             const keys = Object.keys(cookie);
@@ -178,11 +190,20 @@ export default class URLManager {
                         }
                     });
                     if (resCookie) {
-                        const defaultCookie = manager.defaultCookie[response.request.host];
-                        if (defaultCookie) {
-                            resCookie = Object.assign(defaultCookie, resCookie);
+                        const temp = manager.tempCookie[response.request.host];
+                        if (temp) {
+                            resCookie = Object.assign(temp, resCookie);
                         }
-                        manager.defaultCookie[response.request.host] = resCookie;
+
+                        if (!resCookie.setDate) {
+                            const today = new Date();
+                            const tomorrow = new Date();
+                            tomorrow.setDate(today.getDate() + 1);
+                            // tomorrow.setMinutes(today.getMinutes() + 1);
+                            resCookie.setDate = tomorrow;
+                        }
+
+                        manager.tempCookie[response.request.host] = resCookie;
                     }
                 }
                 parseTask.content = body;
