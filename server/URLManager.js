@@ -16,14 +16,10 @@ export default class URLManager {
 
         const us = {
             SUV:'004676817B7A8EDF5CBA48EF6B827329',
-            SNUID:'D5CCD8C2A5A023114F16F390A5451C58',
-            JSESSIONID:'aaarJZBKNIBMH6yuXT0Ow'
         };
 
         const cn = {
             SUV:'00444985DF48337A5C9A264C3B461035',
-            SNUID:'4FEA6461BCBE3C12E0CDDCF5BCCBD956',
-            JSESSIONID:'aaawl7ynIdgdFhzLr15Mw'
         };
 
         this.defaultCookie = {
