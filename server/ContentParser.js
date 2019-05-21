@@ -322,6 +322,7 @@ export default class ContentParser {
             url = eval(script);
         } else {
             StoreManager.instance().shouldAutoUpdateToken = true;
+            url = 'https://pb.sogou.com/cl.gif';
         }
 
         let urlTasks = [];

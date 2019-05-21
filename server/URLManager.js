@@ -23,7 +23,7 @@ export default class URLManager {
         };
 
         this.defaultCookie = {
-            'weixin.sogou.com': us,
+            // 'weixin.sogou.com': us,
         };
 
         this.tempCookie = {};
@@ -137,14 +137,27 @@ export default class URLManager {
         }
 
         let cookie = this.defaultCookie[url.host];
+        if (!cookie) {
+            cookie = {};
+        }
         const tempCookie = this.tempCookie[url.host];
-        if (cookie && tempCookie) {
+        if (tempCookie) {
             const setDate = tempCookie.setDate;
             const now = new Date();
             if (setDate > now) {
                 cookie = Object.assign(cookie, tempCookie);
             } else {
                 this.tempCookie[url.host] = null;
+            }
+        }
+        if (url.host.includes('sogou.com')) {
+            const suvCookie = this.tempCookie['pb.sogou.com'];
+            if (suvCookie) {
+                if (cookie) {
+                    cookie = Object.assign(cookie, suvCookie);
+                } else {
+                    cookie = suvCookie;
+                }
             }
         }
         if (cookie) {
@@ -319,6 +332,9 @@ URLManager.urlHandler = {
         '/': handleSogouWeixinUrl,
         '/link': handleSogouWeixinUrl,
         '/weixin': handleSogouWeixinUrl,
+    },
+    'pb.sogou.com': {
+        '/': handleSogouWeixinUrl,
     },
     'mp.weixin.qq.com': {
         '/': handleWinxinProfileUrl,
